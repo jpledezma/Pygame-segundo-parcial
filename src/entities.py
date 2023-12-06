@@ -16,7 +16,7 @@ class Entity(pygame.sprite.Sprite):
         self.spritesheet = spritesheet
 
         self.animations = self.spritesheet.get_animations()
-        self.image = self.__select_sprite()
+        self.image = self.__set_default_sprite()
         self.rect = self.image.get_rect( center = position )
         self.selected_animation = "idle"
 
@@ -45,11 +45,11 @@ class Entity(pygame.sprite.Sprite):
         # if not self.__vulnerable:
         #     print(self.__health)
 
-    def __select_sprite(self):
+    def __set_default_sprite(self):
         if isinstance(self.spritesheet, SpriteSheet):
             keys_animations = list(self.animations.keys())
             # self.groups_animations = list(self.animations.values())
-            image = self.animations[keys_animations[3]][4]
+            image = self.animations[keys_animations[0]][0]
             return image
 
 
@@ -83,39 +83,26 @@ class Player(Entity):
                  cd_attack: int = 200) -> None:
         super().__init__(path_image, position, health, iframes)
 
-        self.speed = 1
+        self.speed = 5
+        self.frame_span = 100
 
-    def update(self):
-        keys = pygame.key.get_pressed() # esto devuelve una lista de 256 True o False, dependiendo de las teclas que se presionen
+        self.selected_attack = 0
+        self.attacking = False
+        self.moving = False
+        self.falling = False
 
-        for key in keys:
-            if key:
-                break
-            self.selected_animation = 'idle'
+    def update(self, pressed_keys:pygame.key.ScancodeWrapper, keydown_keys: list):
+        
+        # if not (pressed_keys[K_w] or pressed_keys[K_a] or pressed_keys[K_s] or pressed_keys[K_d] or pressed_keys[K_j] or pressed_keys[K_j]):
+        #     self.selected_animation = 'idle'
 
-        if keys[K_d] and self.rect.right <= SCREEN_WIDTH:
-            self.rect.x += self.speed
-            self.selected_animation = 'run'
+        self.move(pressed_keys)
+        self.attack(keydown_keys)
 
-        if keys[K_a] and self.rect.left >= 0:
-            self.rect.x -= self.speed
-            self.selected_animation = 'run'
-
-        if keys[K_w] and self.rect.top >= 0:
-            self.rect.y -= self.speed
-            self.selected_animation = 'run'
-
-        if keys[K_s] and self.rect.bottom <= SCREEN_HEIGHT:
-            self.rect.y += self.speed
-            self.selected_animation = 'death'
-
-        if keys[K_j] and self.rect.top >= 0:
-            self.selected_animation = 'at1'
-        if keys[K_k] and self.rect.top >= 0:
-            self.selected_animation = 'block_idle'
-
-
+        
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.selected_animation]) - 1, self.selected_animation)
+
+        
 
     def update_frame(self, current_time, last_frame, key_animation):
         if current_time - self.last_update >= self.frame_span:
@@ -124,3 +111,70 @@ class Player(Entity):
                 self.current_sprite = 0
             self.image = self.animations[key_animation][self.current_sprite]
             self.last_update = current_time
+            
+
+        print(len(self.animations[self.selected_animation]), self.current_sprite, (self.selected_animation), self.current_sprite >= len(self.animations[self.selected_animation]) - 4)
+        # print(self.attacking)
+
+
+
+    def move(self, keys: pygame.key.ScancodeWrapper):
+
+        if keys[K_d] and self.rect.right <= SCREEN_WIDTH:
+            self.rect.x += self.speed
+
+        if keys[K_a] and self.rect.left >= 0:
+            self.rect.x -= self.speed
+
+        if keys[K_w] and self.rect.top >= 0:
+            self.rect.y -= self.speed
+
+        if keys[K_s] and self.rect.bottom <= SCREEN_HEIGHT:
+            self.rect.y += self.speed
+
+        if keys[K_w] or keys[K_a] or keys[K_s] or keys[K_d]:
+            self.selected_animation = "run"
+
+
+
+    def attack(self, keys: list):
+
+        animations = ('at1', 'at2', 'at3')
+
+        # if K_j in keys:
+        #     if not self.attacking:
+        #         self.current_sprite = 0
+        #         self.selected_attack = 0
+        #         self.attacking = True
+
+        #     if self.current_sprite >= len(self.animations[self.selected_animation]) -1:
+        #         self.selected_attack += 1
+        #         self.current_sprite = 0
+
+        #     if self.selected_attack > 2:
+        #         self.selected_attack = 0
+
+        #     self.selected_animation = animations[self.selected_attack]
+
+        # else:
+        #     self.attacking = False
+
+        if K_j in keys:
+            keys.remove(K_j)
+            self.attacking = True
+
+        self.play_animation(2)
+
+    def play_animation(self, animation):
+
+        if self.attacking:
+            self.current_sprite = 0
+            self.selected_animation = "at2"
+            self.attacking = False
+
+        if self.current_sprite >= len(self.animations[self.selected_animation]) - 1:
+            self.current_sprite = 0
+            self.selected_animation = 'idle'
+            print("aaaaaaaaaa")
+
+

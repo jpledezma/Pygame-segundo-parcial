@@ -2,7 +2,6 @@ import pygame
 from pygame.locals import *
 from config import *
 from entities import *
-import platform
 
 class Game:
     def __init__(self) -> None:
@@ -26,17 +25,28 @@ class Game:
 
         self.player = Player((250, 250), self.all_sprites, hoja_sprites, 500, 500)
 
+        self.keydown_keys = []
+
         # self.platforms = pygame.sprite.Group()
         
     def run(self):
         running = True
+        
+        # keyup_keys = []
         while running:
             self.clock.tick(FPS)
             for event in pygame.event.get():
                 if event.type == QUIT:
                     running = False
 
+                if event.type == KEYDOWN:
+                    if not event.key in self.keydown_keys and (event.key == K_k or event.key == K_j):
+                        self.keydown_keys.append(event.key)
+                if event.type == KEYUP:
+                    if event.key in self.keydown_keys and (event.key == K_k or event.key == K_j):
+                        self.keydown_keys.remove(event.key)
 
+            # print(self.keydown_keys)
             self.draw()
             self.update()
             
@@ -48,7 +58,9 @@ class Game:
         self.all_sprites.draw(self.screen)
 
     def update(self):
-        self.all_sprites.update()
+
+        pressed_keys = pygame.key.get_pressed()
+        self.all_sprites.update(pressed_keys, self.keydown_keys)
 
         pygame.display.flip()
 
