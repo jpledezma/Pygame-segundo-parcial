@@ -15,10 +15,14 @@ class Entity(pygame.sprite.Sprite):
         
         self.spritesheet = spritesheet
 
-        self.animations = self.spritesheet.get_animations()
+        self.animations_forwards = self.spritesheet.get_animations()
+        self.animations_backwards = self.spritesheet.get_animations(flip=True)
+        self.animations = {'f': self.animations_forwards, 'b': self.animations_backwards}
         self.image = self.__set_default_sprite()
         self.rect = self.image.get_rect( center = position )
         self.selected_animation = "idle"
+        self.facing = 'f'
+        self.current_attack = 1
 
         self.__health = health
 
@@ -42,14 +46,12 @@ class Entity(pygame.sprite.Sprite):
     def cronometrar_iframes(self, tiempo_actual:int):
         if not self.__vulnerable and tiempo_actual >= self.__hurt_time + self.__iframes:
             self.__vulnerable = True
-        # if not self.__vulnerable:
-        #     print(self.__health)
 
     def __set_default_sprite(self):
         if isinstance(self.spritesheet, SpriteSheet):
-            keys_animations = list(self.animations.keys())
+            keys_animations = list(self.animations['f'].keys())
             # self.groups_animations = list(self.animations.values())
-            image = self.animations[keys_animations[0]][0]
+            image = self.animations['f'][keys_animations[0]][0]
             return image
 
 
@@ -89,18 +91,20 @@ class Player(Entity):
         self.selected_attack = 0
         self.attacking = False
         self.moving = False
-        self.falling = False
+        self.falling = True
 
-    def update(self, pressed_keys:pygame.key.ScancodeWrapper, keydown_keys: list):
+    def update(self, keydown_keys: list):
         
-        # if not (pressed_keys[K_w] or pressed_keys[K_a] or pressed_keys[K_s] or pressed_keys[K_d] or pressed_keys[K_j] or pressed_keys[K_j]):
-        #     self.selected_animation = 'idle'
-
-        self.move(pressed_keys)
+        self.move(keydown_keys)
         self.attack(keydown_keys)
+        self.jump(keydown_keys)
+        self.fall()
+        print(self.falling)
+        if keydown_keys == [] and not self.attacking and not self.falling:
+            self.selected_animation = "idle"
 
         
-        self.update_frame(pygame.time.get_ticks(), len(self.animations[self.selected_animation]) - 1, self.selected_animation)
+        self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
 
         
 
@@ -109,72 +113,61 @@ class Player(Entity):
             self.current_sprite += 1
             if self.current_sprite > last_frame:
                 self.current_sprite = 0
-            self.image = self.animations[key_animation][self.current_sprite]
+            self.image = self.animations[self.facing][key_animation][self.current_sprite]
             self.last_update = current_time
             
 
-        print(len(self.animations[self.selected_animation]), self.current_sprite, (self.selected_animation), self.current_sprite >= len(self.animations[self.selected_animation]) - 4)
-        # print(self.attacking)
+    def move(self, keys: list):
+        if K_a in keys or K_d in keys:
+                self.selected_animation = "run"
 
+        if not self.attacking:
+            if K_d in keys and self.rect.right <= SCREEN_WIDTH:
+                self.rect.x += self.speed
+                if self.facing == 'b':
+                    self.facing = 'f'
 
+            if K_a in keys and self.rect.left >= 0:
+                self.rect.x -= self.speed
+                if self.facing == 'f':
+                    self.facing = 'b'
 
-    def move(self, keys: pygame.key.ScancodeWrapper):
+            if K_a in keys and K_d in keys:
+                keys.remove(K_d) if keys.index(K_d) < keys.index(K_a) else keys.remove(K_a)
 
-        if keys[K_d] and self.rect.right <= SCREEN_WIDTH:
-            self.rect.x += self.speed
-
-        if keys[K_a] and self.rect.left >= 0:
-            self.rect.x -= self.speed
-
-        if keys[K_w] and self.rect.top >= 0:
-            self.rect.y -= self.speed
-
-        if keys[K_s] and self.rect.bottom <= SCREEN_HEIGHT:
-            self.rect.y += self.speed
-
-        if keys[K_w] or keys[K_a] or keys[K_s] or keys[K_d]:
-            self.selected_animation = "run"
+            
 
 
 
     def attack(self, keys: list):
-
-        animations = ('at1', 'at2', 'at3')
-
-        # if K_j in keys:
-        #     if not self.attacking:
-        #         self.current_sprite = 0
-        #         self.selected_attack = 0
-        #         self.attacking = True
-
-        #     if self.current_sprite >= len(self.animations[self.selected_animation]) -1:
-        #         self.selected_attack += 1
-        #         self.current_sprite = 0
-
-        #     if self.selected_attack > 2:
-        #         self.selected_attack = 0
-
-        #     self.selected_animation = animations[self.selected_attack]
-
-        # else:
-        #     self.attacking = False
-
         if K_j in keys:
             keys.remove(K_j)
+            if self.attacking and self.current_attack < 3:
+                self.current_attack += 1 
+            else:
+                self.current_attack = 1
             self.attacking = True
-
-        self.play_animation(2)
-
-    def play_animation(self, animation):
+            self.current_sprite = 0
 
         if self.attacking:
-            self.current_sprite = 0
-            self.selected_animation = "at2"
-            self.attacking = False
+            self.selected_animation = f"at{self.current_attack}"
+            if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+                self.attacking = False
+                self.current_attack = 1
 
-        if self.current_sprite >= len(self.animations[self.selected_animation]) - 1:
-            self.current_sprite = 0
-            self.selected_animation = 'idle'
-            print("aaaaaaaaaa")
+    def jump(self, keys: list):
 
+        if K_SPACE in keys and not self.falling:
+            self.selected_animation = "jump"
 
+            if not self.attacking:
+                self.rect.y -= self.speed
+        else:
+            self.falling = True
+
+    def fall(self):
+        if self.rect.bottom < SCREEN_HEIGHT and self.falling:
+            self.rect.y += self.speed
+            self.selected_animation = 'fall'
+        else:
+            self.falling = False

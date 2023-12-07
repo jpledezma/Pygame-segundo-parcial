@@ -27,12 +27,13 @@ class SpriteSheet:
 
 
 
-    def get_animations(self) -> dict:
+    def get_animations(self, flip: bool = False) -> dict:
 
         animations = {}
         frames_group = []
 
         selected_animation = 0
+        
         
 
         for row in range(self.rows):
@@ -40,6 +41,8 @@ class SpriteSheet:
             while columna < self.cols:
                 sprite = self.sheet.subsurface((columna * self.sprite_width, row * self.sprite_height, self.sprite_width, self.sprite_height))
                 sprite = pygame.transform.scale(sprite, (self.sprite_width * self.scale, self.sprite_height * self.scale))
+                if flip:
+                    sprite = pygame.transform.flip(sprite, True, False)
                 if len(frames_group) < self.animations_frames_number[selected_animation]:
                     frames_group.append(sprite)
                     columna += 1

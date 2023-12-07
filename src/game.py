@@ -21,9 +21,9 @@ class Game:
         lista_frames = [8, 10, 6, 6, 8, 3, 4, 3, 10, 8, 5, 9, 5, 5]
 
         player_img = pygame.image.load(self.path_player).convert_alpha()
-        hoja_sprites = SpriteSheet(player_img, 9, 10, 100, 55, lista_keys, lista_frames, 2)
+        spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, lista_keys, lista_frames, 2)
 
-        self.player = Player((250, 250), self.all_sprites, hoja_sprites, 500, 500)
+        self.player = Player((250, 250), self.all_sprites, spritesheet, 500, 500)
 
         self.keydown_keys = []
 
@@ -32,7 +32,6 @@ class Game:
     def run(self):
         running = True
         
-        # keyup_keys = []
         while running:
             self.clock.tick(FPS)
             for event in pygame.event.get():
@@ -40,10 +39,10 @@ class Game:
                     running = False
 
                 if event.type == KEYDOWN:
-                    if not event.key in self.keydown_keys and (event.key == K_k or event.key == K_j):
+                    if not event.key in self.keydown_keys:
                         self.keydown_keys.append(event.key)
                 if event.type == KEYUP:
-                    if event.key in self.keydown_keys and (event.key == K_k or event.key == K_j):
+                    if event.key in self.keydown_keys:
                         self.keydown_keys.remove(event.key)
 
             # print(self.keydown_keys)
@@ -59,8 +58,7 @@ class Game:
 
     def update(self):
 
-        pressed_keys = pygame.key.get_pressed()
-        self.all_sprites.update(pressed_keys, self.keydown_keys)
+        self.all_sprites.update(self.keydown_keys)
 
         pygame.display.flip()
 
