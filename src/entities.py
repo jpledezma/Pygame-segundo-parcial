@@ -50,7 +50,7 @@ class Entity(pygame.sprite.Sprite):
     def __set_default_sprite(self):
         if isinstance(self.spritesheet, SpriteSheet):
             keys_animations = list(self.animations['f'].keys())
-            # self.groups_animations = list(self.animations.values())
+            # self.gravityroups_animations = list(self.animations.values())
             image = self.animations['f'][keys_animations[0]][0]
             return image
 
@@ -86,22 +86,35 @@ class Player(Entity):
         super().__init__(path_image, position, health, iframes)
 
         self.speed = 5
+        self.speed_v = 5
         self.frame_span = 100
 
         self.selected_attack = 0
         self.attacking = False
         self.moving = False
         self.falling = True
+        self.jumping = False
+        self.action_list = (self.attacking, self.falling, self.jumping)
+        self.gravity = 0.1
 
     def update(self, keydown_keys: list):
+
+        self.action_list = (self.attacking, self.falling, self.jumping)
         
         self.move(keydown_keys)
-        self.attack(keydown_keys)
         self.jump(keydown_keys)
         self.fall()
-        print(self.falling)
-        if keydown_keys == [] and not self.attacking and not self.falling:
+        self.attack(keydown_keys)
+        print(any(self.action_list))
+        if keydown_keys == [] and not any(self.action_list):
+        # if keydown_keys == [] and not self.attacking and not self.falling and not self.jumping:
             self.selected_animation = "idle"
+
+        if self.rect.bottom > SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
+
+        if not self.falling and not self.jumping:
+            self.speed_v = 0
 
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
@@ -121,7 +134,7 @@ class Player(Entity):
         if K_a in keys or K_d in keys:
                 self.selected_animation = "run"
 
-        if not self.attacking:
+        if not self.attacking or self.falling or self.jumping:
             if K_d in keys and self.rect.right <= SCREEN_WIDTH:
                 self.rect.x += self.speed
                 if self.facing == 'b':
@@ -158,16 +171,23 @@ class Player(Entity):
     def jump(self, keys: list):
 
         if K_SPACE in keys and not self.falling:
-            self.selected_animation = "jump"
+            
+            keys.remove(K_SPACE)
+            self.jumping = True
+            self.speed_v = 6
 
-            if not self.attacking:
-                self.rect.y -= self.speed
-        else:
+        if self.jumping:
+            self.selected_animation = "jump"
+            self.rect.y -= self.speed_v
+            self.speed_v -= self.gravity
+        if self.speed_v <= 0:
             self.falling = True
+            self.jumping = False
 
     def fall(self):
         if self.rect.bottom < SCREEN_HEIGHT and self.falling:
-            self.rect.y += self.speed
+            self.rect.y += self.speed_v
+            self.speed_v += self.gravity
             self.selected_animation = 'fall'
         else:
             self.falling = False
