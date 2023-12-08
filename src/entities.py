@@ -50,7 +50,7 @@ class Entity(pygame.sprite.Sprite):
     def __set_default_sprite(self):
         if isinstance(self.spritesheet, SpriteSheet):
             keys_animations = list(self.animations['f'].keys())
-            # self.gravityroups_animations = list(self.animations.values())
+            # self.groups_animations = list(self.animations.values())
             image = self.animations['f'][keys_animations[0]][0]
             return image
 
@@ -82,32 +82,34 @@ class Player(Entity):
                  iframes: int = 800,
                  physical_power: int = 40,
                  magic_power: int = 40,
-                 cd_attack: int = 200) -> None:
+                 cd_parry: int = 1750) -> None:
         super().__init__(path_image, position, health, iframes)
 
         self.speed = 5
         self.speed_v = 5
         self.frame_span = 100
 
-        self.selected_attack = 0
         self.attacking = False
         self.moving = False
-        self.falling = True
+        self.falling = False
         self.jumping = False
-        self.action_list = (self.attacking, self.falling, self.jumping)
-        self.gravity = 0.1
+        self.parry = False
+        self.wall_sliding = False
+        self.action_list = (self.attacking, self.falling, self.jumping, self.parry, self.wall_sliding)
+
+        self.cd_parry = cd_parry
+        self.parry_moment = 0
+        self.selected_attack = 0
+
+        self.gravity = 0.2
+        self.jump_power = 8
 
     def update(self, keydown_keys: list):
 
-        self.action_list = (self.attacking, self.falling, self.jumping)
+        self.action_list = (self.attacking, self.falling, self.jumping, self.parry, self.wall_sliding)
         
-        self.move(keydown_keys)
-        self.jump(keydown_keys)
-        self.fall()
-        self.attack(keydown_keys)
-        print(any(self.action_list))
+        self.detect_actions(keydown_keys)
         if keydown_keys == [] and not any(self.action_list):
-        # if keydown_keys == [] and not self.attacking and not self.falling and not self.jumping:
             self.selected_animation = "idle"
 
         if self.rect.bottom > SCREEN_HEIGHT:
@@ -118,8 +120,8 @@ class Player(Entity):
 
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
-
-        
+        print(self.jumping, self.falling, self.wall_sliding)
+        # print(self.rect.bottom < SCREEN_HEIGHT )
 
     def update_frame(self, current_time, last_frame, key_animation):
         if current_time - self.last_update >= self.frame_span:
@@ -128,33 +130,32 @@ class Player(Entity):
                 self.current_sprite = 0
             self.image = self.animations[self.facing][key_animation][self.current_sprite]
             self.last_update = current_time
+
             
-
-    def move(self, keys: list):
-        if K_a in keys or K_d in keys:
-                self.selected_animation = "run"
-
-        if not self.attacking or self.falling or self.jumping:
+    def detect_actions(self, keys: list):
+        # Movimiento horizontal
+        move_direction = "None"
+        if not self.attacking and not self.parry or self.falling or self.jumping:
             if K_d in keys and self.rect.right <= SCREEN_WIDTH:
-                self.rect.x += self.speed
-                if self.facing == 'b':
-                    self.facing = 'f'
-
+                move_direction = "right"
+                self.selected_animation = "run"
             if K_a in keys and self.rect.left >= 0:
-                self.rect.x -= self.speed
-                if self.facing == 'f':
-                    self.facing = 'b'
+                move_direction = "left"
+                self.selected_animation = "run"
+        if K_a in keys and K_d in keys:
+            keys.remove(K_d) if keys.index(K_d) < keys.index(K_a) else keys.remove(K_a)
 
-            if K_a in keys and K_d in keys:
-                keys.remove(K_d) if keys.index(K_d) < keys.index(K_a) else keys.remove(K_a)
+        # Salto
+        if K_SPACE in keys and not self.falling:
+            keys.remove(K_SPACE)
+            if not self.jumping:
+                self.jumping = True
+                self.speed_v = self.jump_power
 
-            
-
-
-
-    def attack(self, keys: list):
+        # Ataque
         if K_j in keys:
             keys.remove(K_j)
+            self.parry = False
             if self.attacking and self.current_attack < 3:
                 self.current_attack += 1 
             else:
@@ -162,32 +163,82 @@ class Player(Entity):
             self.attacking = True
             self.current_sprite = 0
 
+        # Bloqueo / parry
+        if K_k in keys:
+            keys.remove(K_k)
+            if not self.parry and pygame.time.get_ticks() >= self.parry_moment + self.cd_parry:
+                self.parry_moment = pygame.time.get_ticks()
+                self.parry = True
+                self.current_sprite = 0
+
+        # Caida
+        if self.rect.bottom < SCREEN_HEIGHT and not self.wall_sliding and not self.jumping:
+            self.falling = True
+        else:
+            self.falling = False
+
+        # Wall slide
+        if (self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH):
+            if (self.jumping or self.falling):
+                self.wall_sliding = True
+        else:
+            self.wall_sliding = False
+
+        self.move(move_direction)
+        self.jump()
+        self.fall()
+        self.attack()
+        self.block()
+        self.wall_slide()
+
+    def move(self, direction: str):
+            if direction == "right":
+                self.rect.x += self.speed
+                self.facing = 'f'
+            elif direction == "left":
+                self.rect.x -= self.speed
+                self.facing = 'b'
+
+
+    def attack(self):
         if self.attacking:
             self.selected_animation = f"at{self.current_attack}"
             if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
                 self.attacking = False
                 self.current_attack = 1
 
-    def jump(self, keys: list):
+    def block(self):
+        if self.parry:
+            self.selected_animation = "block_idle"
+            if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+                self.parry = False
 
-        if K_SPACE in keys and not self.falling:
-            
-            keys.remove(K_SPACE)
-            self.jumping = True
-            self.speed_v = 6
-
+    def jump(self):
         if self.jumping:
+            self.wall_sliding = False
             self.selected_animation = "jump"
             self.rect.y -= self.speed_v
             self.speed_v -= self.gravity
-        if self.speed_v <= 0:
-            self.falling = True
-            self.jumping = False
+            if self.rect.left <= 0:
+                self.rect.move_ip(6, 0)
+            if self.rect.right >= SCREEN_WIDTH:
+                self.rect.move_ip(-6, 0)
+            if self.speed_v <= 0:
+                self.falling = True
+                self.jumping = False
 
     def fall(self):
-        if self.rect.bottom < SCREEN_HEIGHT and self.falling:
+        if self.falling:
             self.rect.y += self.speed_v
             self.speed_v += self.gravity
             self.selected_animation = 'fall'
         else:
             self.falling = False
+
+    def wall_slide(self):
+        if self.wall_sliding:
+            self.selected_animation = "wall_slide"
+            self.speed_v = 1
+            self.falling = False
+            self.jumping = False
+            self.rect.y += self.speed_v
