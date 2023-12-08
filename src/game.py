@@ -23,7 +23,7 @@ class Game:
         player_img = pygame.image.load(self.path_player).convert_alpha()
         spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, lista_keys, lista_frames, 2)
 
-        self.player = Player((250, 250), self.all_sprites, spritesheet, 500, 500)
+        self.player = Player((250, 250), self.all_sprites, spritesheet, 1000, 2000)
 
         self.keydown_keys = []
 
@@ -45,6 +45,10 @@ class Game:
                     if event.key in self.keydown_keys:
                         self.keydown_keys.remove(event.key)
 
+                if event.type == MOUSEBUTTONDOWN:
+                    if self.player.rect.collidepoint(pygame.mouse.get_pos()):
+                        self.player.hurt(100)
+
             # print(self.keydown_keys)
             self.draw()
             self.update()
@@ -55,6 +59,10 @@ class Game:
     def draw(self):
         self.screen.fill(LIGHT_BLUE)
         self.all_sprites.draw(self.screen)
+        pygame.draw.rect(self.screen, (0, 0, 0),  self.player.rect, 2)
+
+        for entity in self.all_sprites:
+            entity.time_iframes(pygame.time.get_ticks())
 
     def update(self):
 

@@ -19,14 +19,14 @@ class Entity(pygame.sprite.Sprite):
         self.animations_backwards = self.spritesheet.get_animations(flip=True)
         self.animations = {'f': self.animations_forwards, 'b': self.animations_backwards}
         self.image = self.__set_default_sprite()
-        self.rect = self.image.get_rect( center = position )
+        self.rect: pygame.Rect = self.image.get_rect( center = position )
         self.selected_animation = "idle"
         self.facing = 'f'
         self.current_attack = 1
 
         self.__health = health
 
-        self.__hurt_time = 0
+        self.__hurt_moment = 0
         self.__iframes = iframes
         self.__vulnerable = True
         self.__intangible = False
@@ -35,16 +35,16 @@ class Entity(pygame.sprite.Sprite):
         self.current_sprite = 0
         self.frame_span = 100
 
-    def herir(self, intensidad:int):
+    def hurt(self, damage:int):
         if self.__vulnerable and not self.__intangible:
             self.__vulnerable = False
-            self.__health -= intensidad
-            self.__hurt_time = pygame.time.get_ticks()
+            self.__health -= damage
+            self.__hurt_moment = pygame.time.get_ticks()
             print("herido")
 
 
-    def cronometrar_iframes(self, tiempo_actual:int):
-        if not self.__vulnerable and tiempo_actual >= self.__hurt_time + self.__iframes:
+    def time_iframes(self, tiempo_actual:int):
+        if not self.__vulnerable and tiempo_actual >= self.__hurt_moment + self.__iframes:
             self.__vulnerable = True
 
     def __set_default_sprite(self):
@@ -76,14 +76,15 @@ class Entity(pygame.sprite.Sprite):
 
 class Player(Entity):
     def __init__(self, 
-                 path_image: str, 
                  position: tuple[int, int], 
+                 groups,
+                 spritesheet,
                  health: int = 1000, 
                  iframes: int = 800,
                  physical_power: int = 40,
                  magic_power: int = 40,
-                 cd_parry: int = 1750) -> None:
-        super().__init__(path_image, position, health, iframes)
+                 cd_parry: int = 1500) -> None:
+        super().__init__(position, groups, spritesheet, health, iframes)
 
         self.speed = 5
         self.speed_v = 5
@@ -120,8 +121,9 @@ class Player(Entity):
 
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
-        print(self.jumping, self.falling, self.wall_sliding)
+        # print(self.jumping, self.falling, self.wall_sliding)
         # print(self.rect.bottom < SCREEN_HEIGHT )
+        print(self.health)
 
     def update_frame(self, current_time, last_frame, key_animation):
         if current_time - self.last_update >= self.frame_span:
