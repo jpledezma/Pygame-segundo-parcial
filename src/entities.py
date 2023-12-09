@@ -139,9 +139,9 @@ class Player(Entity):
 
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
-
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
+
 
     def update_frame(self, current_time, last_frame, key_animation):
         if current_time - self.last_update >= self.frame_span:
@@ -215,7 +215,7 @@ class Player(Entity):
 
         # Roll
         if K_LSHIFT in keys:
-            if (not self.any_action() or self.actions['moving']['flag'] == True) \
+            if not self.any_action("moving")  \
                 and pygame.time.get_ticks() >= self.roll_moment + self.cd_roll:
                 self.roll_moment = pygame.time.get_ticks()
                 self.actions['rolling']['flag'] = True
@@ -224,22 +224,16 @@ class Player(Entity):
                 self.current_sprite = 0
                 keys.remove(K_LSHIFT)
 
-        # self.move(move_direction)
-
         for action in self.actions.values():
             if action['flag']:
                 action['function']()
 
-    def move(self, direction: str = ""):
+    def move(self):
         self.selected_animation = "run"
-        # if direction == "right":
         if self.facing == "f":
             self.rect.x += self.speed
-            # self.facing = 'f'
-        # elif direction == "left":
         if self.facing == "b":
             self.rect.x -= self.speed
-            # self.facing = 'b'
 
 
     def attack(self):
@@ -256,6 +250,7 @@ class Player(Entity):
     def jump(self):
         self.selected_animation = "jump"
         self.actions['wall_sliding']['flag'] = False
+        self.actions['rolling']['flag'] = False
         self.rect.y -= self.speed_v
         self.speed_v -= self.gravity
         if self.rect.left <= 0:
@@ -286,10 +281,10 @@ class Player(Entity):
             self.actions['rolling']['flag'] = False
             self.intangible = False
 
-    def any_action(self) -> bool:
+    def any_action(self, exclude: str = "") -> bool:
         flag = False
-        for action in self.actions.values():
-            if action['flag']:
+        for key, value in self.actions.items():
+            if value['flag'] and key != exclude:
                 flag = True
                 break
 
