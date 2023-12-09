@@ -2,6 +2,7 @@ import pygame
 from spritesheet import *
 from pygame.locals import *
 from config import *
+from spritesheet import SpriteSheet
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self,
@@ -74,29 +75,37 @@ class Entity(pygame.sprite.Sprite):
             self.__intangible = value
 
 
+class Character(Entity):
+    def __init__(self, 
+                 position: tuple[int, int], 
+                 groups, 
+                 spritesheet: SpriteSheet, 
+                 health: int = 200, 
+                 speed: int = 5,
+                 iframes: int = 500) -> None:
+        super().__init__(position, groups, spritesheet, health, iframes)
+
+        self.speed = speed
+        self.speed_v = 0
+        self.frame_span = 100
+
+
 class Player(Entity):
     def __init__(self, 
                  position: tuple[int, int], 
                  groups,
                  spritesheet,
                  health: int = 1000, 
+                 speed: int = 5,
                  iframes: int = 800,
                  physical_power: int = 40,
                  magic_power: int = 40,
                  cd_parry: int = 1500) -> None:
         super().__init__(position, groups, spritesheet, health, iframes)
 
-        self.speed = 5
-        self.speed_v = 5
+        self.speed = speed
+        self.speed_v = 0
         self.frame_span = 100
-
-        self.attacking = False
-        self.moving = False
-        self.falling = False
-        self.jumping = False
-        self.parry = False
-        self.wall_sliding = False
-        self.action_list = (self.attacking, self.falling, self.jumping, self.parry, self.wall_sliding)
 
         self.cd_parry = cd_parry
         self.parry_moment = 0
@@ -105,25 +114,29 @@ class Player(Entity):
         self.gravity = 0.2
         self.jump_power = 8
 
-    def update(self, keydown_keys: list):
+        self.actions = { 
+                         'jumping': {'flag': False, 'function': self.jump},
+                         'falling': {'flag': True, 'function': self.fall},
+                         'attacking': {'flag': False, 'function': self.attack},
+                         'parry': {'flag': False, 'function': self.block},
+                         'wall_sliding': {'flag': False, 'function': self.wall_slide}
+                       }
 
-        self.action_list = (self.attacking, self.falling, self.jumping, self.parry, self.wall_sliding)
+    def update(self, keydown_keys: list):
         
         self.detect_actions(keydown_keys)
-        if keydown_keys == [] and not any(self.action_list):
+        if keydown_keys == [] and not self.any_action():
             self.selected_animation = "idle"
 
         if self.rect.bottom > SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
 
-        if not self.falling and not self.jumping:
+        if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
 
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
-        # print(self.jumping, self.falling, self.wall_sliding)
-        # print(self.rect.bottom < SCREEN_HEIGHT )
-        print(self.health)
+
 
     def update_frame(self, current_time, last_frame, key_animation):
         if current_time - self.last_update >= self.frame_span:
@@ -136,8 +149,8 @@ class Player(Entity):
             
     def detect_actions(self, keys: list):
         # Movimiento horizontal
-        move_direction = "None"
-        if not self.attacking and not self.parry or self.falling or self.jumping:
+        move_direction = ""
+        if not self.actions['attacking']['flag'] and not self.actions['parry']['flag'] or self.actions['falling']['flag'] or self.actions['jumping']['flag']:
             if K_d in keys and self.rect.right <= SCREEN_WIDTH:
                 move_direction = "right"
                 self.selected_animation = "run"
@@ -148,99 +161,100 @@ class Player(Entity):
             keys.remove(K_d) if keys.index(K_d) < keys.index(K_a) else keys.remove(K_a)
 
         # Salto
-        if K_SPACE in keys and not self.falling:
+        if K_SPACE in keys and not self.actions['falling']['flag']:
             keys.remove(K_SPACE)
-            if not self.jumping:
-                self.jumping = True
+            if not self.actions['jumping']['flag']:
+                self.actions['jumping']['flag'] = True
                 self.speed_v = self.jump_power
 
         # Ataque
         if K_j in keys:
             keys.remove(K_j)
-            self.parry = False
-            if self.attacking and self.current_attack < 3:
+            self.actions['parry']['flag'] = False
+            if self.actions['attacking']['flag'] and self.current_attack < 3:
                 self.current_attack += 1 
             else:
                 self.current_attack = 1
-            self.attacking = True
+            self.actions['attacking']['flag'] = True
             self.current_sprite = 0
 
         # Bloqueo / parry
         if K_k in keys:
             keys.remove(K_k)
-            if not self.parry and pygame.time.get_ticks() >= self.parry_moment + self.cd_parry:
+            if not self.actions['parry']['flag'] and pygame.time.get_ticks() >= self.parry_moment + self.cd_parry:
                 self.parry_moment = pygame.time.get_ticks()
-                self.parry = True
+                self.actions['parry']['flag'] = True
                 self.current_sprite = 0
 
         # Caida
-        if self.rect.bottom < SCREEN_HEIGHT and not self.wall_sliding and not self.jumping:
-            self.falling = True
+        if self.rect.bottom < SCREEN_HEIGHT and not self.actions['wall_sliding']['flag'] and not self.actions['jumping']['flag']:
+            self.actions['falling']['flag'] = True
         else:
-            self.falling = False
+            self.actions['falling']['flag'] = False
 
         # Wall slide
         if (self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH):
-            if (self.jumping or self.falling):
-                self.wall_sliding = True
+            if (self.actions['jumping']['flag'] or self.actions['falling']['flag']):
+                self.actions['wall_sliding']['flag'] = True
         else:
-            self.wall_sliding = False
+            self.actions['wall_sliding']['flag'] = False
 
         self.move(move_direction)
-        self.jump()
-        self.fall()
-        self.attack()
-        self.block()
-        self.wall_slide()
+
+        for action in self.actions.values():
+            if action['flag']:
+                action['function']()
 
     def move(self, direction: str):
-            if direction == "right":
-                self.rect.x += self.speed
-                self.facing = 'f'
-            elif direction == "left":
-                self.rect.x -= self.speed
-                self.facing = 'b'
+        if direction == "right":
+            self.rect.x += self.speed
+            self.facing = 'f'
+        elif direction == "left":
+            self.rect.x -= self.speed
+            self.facing = 'b'
 
 
     def attack(self):
-        if self.attacking:
-            self.selected_animation = f"at{self.current_attack}"
-            if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
-                self.attacking = False
-                self.current_attack = 1
+        self.selected_animation = f"at{self.current_attack}"
+        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+            self.actions['attacking']['flag'] = False
+            self.current_attack = 1
 
     def block(self):
-        if self.parry:
-            self.selected_animation = "block_idle"
-            if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
-                self.parry = False
+        self.selected_animation = "block_idle"
+        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+            self.actions['parry']['flag'] = False
 
     def jump(self):
-        if self.jumping:
-            self.wall_sliding = False
-            self.selected_animation = "jump"
-            self.rect.y -= self.speed_v
-            self.speed_v -= self.gravity
-            if self.rect.left <= 0:
-                self.rect.move_ip(6, 0)
-            if self.rect.right >= SCREEN_WIDTH:
-                self.rect.move_ip(-6, 0)
-            if self.speed_v <= 0:
-                self.falling = True
-                self.jumping = False
+        self.actions['wall_sliding']['flag'] = False
+        self.selected_animation = "jump"
+        self.rect.y -= self.speed_v
+        self.speed_v -= self.gravity
+        if self.rect.left <= 0:
+            self.rect.move_ip(6, 0)
+        if self.rect.right >= SCREEN_WIDTH:
+            self.rect.move_ip(-6, 0)
+        if self.speed_v <= 0:
+            self.actions['falling']['flag'] = True
+            self.actions['jumping']['flag'] = False
 
     def fall(self):
-        if self.falling:
-            self.rect.y += self.speed_v
-            self.speed_v += self.gravity
-            self.selected_animation = 'fall'
-        else:
-            self.falling = False
+        self.rect.y += self.speed_v
+        self.speed_v += self.gravity
+        self.selected_animation = 'fall'
 
     def wall_slide(self):
-        if self.wall_sliding:
-            self.selected_animation = "wall_slide"
-            self.speed_v = 1
-            self.falling = False
-            self.jumping = False
-            self.rect.y += self.speed_v
+        self.selected_animation = "wall_slide"
+        self.speed_v = 1
+        self.actions['falling']['flag'] = False
+        self.actions['jumping']['flag'] = False
+        self.rect.y += self.speed_v
+
+    def any_action(self) -> bool:
+        flag = False
+        for action in self.actions.values():
+            if action['flag']:
+                flag = True
+                break
+
+        return flag
