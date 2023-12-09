@@ -23,7 +23,7 @@ class Game:
         player_img = pygame.image.load(self.path_player).convert_alpha()
         spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, lista_keys, lista_frames, 2)
 
-        self.player = Player((250, 250), self.all_sprites, spritesheet, 1000, 7, 2000)
+        self.player = Player((250, 250), self.all_sprites, spritesheet, 1000, 5, 2000)
 
         self.keydown_keys = []
 

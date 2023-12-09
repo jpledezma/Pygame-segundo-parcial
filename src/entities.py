@@ -105,16 +105,22 @@ class Player(Entity):
 
         self.speed = speed
         self.speed_v = 0
+        self.speed_roll = 7
         self.frame_span = 100
 
         self.cd_parry = cd_parry
         self.parry_moment = 0
+        self.cd_roll = 1500#cd_roll
+        self.roll_moment = 0
+
         self.selected_attack = 0
 
         self.gravity = 0.2
         self.jump_power = 8
 
         self.actions = { 
+                         'moving': {'flag': False, 'function': self.move},
+                         'rolling': {'flag': False, 'function': self.roll},
                          'jumping': {'flag': False, 'function': self.jump},
                          'falling': {'flag': True, 'function': self.fall},
                          'attacking': {'flag': False, 'function': self.attack},
@@ -125,7 +131,7 @@ class Player(Entity):
     def update(self, keydown_keys: list):
         
         self.detect_actions(keydown_keys)
-        if keydown_keys == [] and not self.any_action():
+        if not self.any_action():
             self.selected_animation = "idle"
 
         if self.rect.bottom > SCREEN_HEIGHT:
@@ -136,7 +142,6 @@ class Player(Entity):
 
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
-
 
     def update_frame(self, current_time, last_frame, key_animation):
         if current_time - self.last_update >= self.frame_span:
@@ -149,14 +154,21 @@ class Player(Entity):
             
     def detect_actions(self, keys: list):
         # Movimiento horizontal
-        move_direction = ""
-        if not self.actions['attacking']['flag'] and not self.actions['parry']['flag'] or self.actions['falling']['flag'] or self.actions['jumping']['flag']:
+        if not self.any_action() or self.actions['falling']['flag'] \
+           or self.actions['jumping']['flag'] or self.actions['moving']['flag']:
+            
+                
+            
+
             if K_d in keys and self.rect.right <= SCREEN_WIDTH:
-                move_direction = "right"
-                self.selected_animation = "run"
-            if K_a in keys and self.rect.left >= 0:
-                move_direction = "left"
-                self.selected_animation = "run"
+                self.facing = "f"
+                self.actions['moving']['flag'] = True
+            elif K_a in keys and self.rect.left >= 0:
+                self.facing = "b"
+                self.actions['moving']['flag'] = True
+            else:
+                self.actions['moving']['flag'] = False
+
         if K_a in keys and K_d in keys:
             keys.remove(K_d) if keys.index(K_d) < keys.index(K_a) else keys.remove(K_a)
 
@@ -171,6 +183,7 @@ class Player(Entity):
         if K_j in keys:
             keys.remove(K_j)
             self.actions['parry']['flag'] = False
+            self.actions['moving']['flag'] = False
             if self.actions['attacking']['flag'] and self.current_attack < 3:
                 self.current_attack += 1 
             else:
@@ -181,6 +194,7 @@ class Player(Entity):
         # Bloqueo / parry
         if K_k in keys:
             keys.remove(K_k)
+            self.actions['moving']['flag'] = False
             if not self.actions['parry']['flag'] and pygame.time.get_ticks() >= self.parry_moment + self.cd_parry:
                 self.parry_moment = pygame.time.get_ticks()
                 self.actions['parry']['flag'] = True
@@ -199,19 +213,33 @@ class Player(Entity):
         else:
             self.actions['wall_sliding']['flag'] = False
 
-        self.move(move_direction)
+        # Roll
+        if K_LSHIFT in keys:
+            if (not self.any_action() or self.actions['moving']['flag'] == True) \
+                and pygame.time.get_ticks() >= self.roll_moment + self.cd_roll:
+                self.roll_moment = pygame.time.get_ticks()
+                self.actions['rolling']['flag'] = True
+                self.actions['moving']['flag'] = False
+                self.intangible = True
+                self.current_sprite = 0
+                keys.remove(K_LSHIFT)
+
+        # self.move(move_direction)
 
         for action in self.actions.values():
             if action['flag']:
                 action['function']()
 
-    def move(self, direction: str):
-        if direction == "right":
+    def move(self, direction: str = ""):
+        self.selected_animation = "run"
+        # if direction == "right":
+        if self.facing == "f":
             self.rect.x += self.speed
-            self.facing = 'f'
-        elif direction == "left":
+            # self.facing = 'f'
+        # elif direction == "left":
+        if self.facing == "b":
             self.rect.x -= self.speed
-            self.facing = 'b'
+            # self.facing = 'b'
 
 
     def attack(self):
@@ -226,8 +254,8 @@ class Player(Entity):
             self.actions['parry']['flag'] = False
 
     def jump(self):
-        self.actions['wall_sliding']['flag'] = False
         self.selected_animation = "jump"
+        self.actions['wall_sliding']['flag'] = False
         self.rect.y -= self.speed_v
         self.speed_v -= self.gravity
         if self.rect.left <= 0:
@@ -239,9 +267,9 @@ class Player(Entity):
             self.actions['jumping']['flag'] = False
 
     def fall(self):
+        self.selected_animation = 'fall'
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
-        self.selected_animation = 'fall'
 
     def wall_slide(self):
         self.selected_animation = "wall_slide"
@@ -249,6 +277,14 @@ class Player(Entity):
         self.actions['falling']['flag'] = False
         self.actions['jumping']['flag'] = False
         self.rect.y += self.speed_v
+
+    def roll(self):
+        self.selected_animation = "roll"
+        if self.rect.left >= 0 and self.rect.right <= SCREEN_WIDTH:
+            self.rect.move_ip(self.speed_roll, 0) if self.facing == 'f' else self.rect.move_ip(-self.speed_roll, 0)
+        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+            self.actions['rolling']['flag'] = False
+            self.intangible = False
 
     def any_action(self) -> bool:
         flag = False
