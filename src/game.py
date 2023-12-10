@@ -14,16 +14,25 @@ class Game:
         self.all_sprites = pygame.sprite.Group()
 
         self.path_player = "assets/sprites/jugador/HeroKnight.png"
+        self.path_nightborne = "assets/sprites/enemigos/NightBorne.png"
 
         self.all_sprites = pygame.sprite.Group()
 
-        lista_keys = ['idle', 'run', 'at1', 'at2', 'at3', 'jump', 'fall', 'hurt', 'death', 'block_idle', 'block', 'roll', 'ledge_grab', 'wall_slide']
-        lista_frames = [8, 10, 6, 6, 8, 3, 4, 3, 10, 8, 5, 9, 5, 5]
+        anim_keys_player = ['idle', 'run', 'at1', 'at2', 'at3', 'jump', 'fall', 'hurt', 'death', 'block_idle', 'block', 'roll', 'ledge_grab', 'wall_slide']
+        anim_frames_player = [8, 10, 6, 6, 8, 3, 4, 3, 10, 8, 5, 9, 5, 5]
+
+        anim_keys_nightborne = ['idle', 'run', 'jump', 'attack', 'fall', 'death']
+        anim_frames_nightborne = [9, 6, 5, 12, 5, 23]
+
+        nightborne_img = pygame.image.load(self.path_nightborne).convert_alpha()
+        enemy_spritesheet = SpriteSheet(nightborne_img, 6, 10, 80, 80, anim_keys_nightborne, anim_frames_nightborne, 2)
 
         player_img = pygame.image.load(self.path_player).convert_alpha()
-        spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, lista_keys, lista_frames, 2)
+        player_spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, anim_keys_player, anim_frames_player, 2)
 
-        self.player = Player((250, 250), self.all_sprites, spritesheet, 1000, 5, 2000)
+        self.player = Player((250, 250), self.all_sprites, player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2)
+        self.player2 = Character((500, 250), self.all_sprites, player_spritesheet, 1500, 4)
+        self.enemy = Character((380, 100), self.all_sprites, enemy_spritesheet, 1500, 4)
 
         self.keydown_keys = []
 
