@@ -23,7 +23,6 @@ class Entity(pygame.sprite.Sprite):
         self.rect: pygame.Rect = self.image.get_rect( center = position )
         self.selected_animation = "idle"
         self.facing = 'f'
-        self.current_attack = 1
 
         self.__health = health
 
@@ -82,52 +81,25 @@ class Character(Entity):
                  spritesheet: SpriteSheet, 
                  health: int = 200, 
                  speed: int = 5,
-                 iframes: int = 500) -> None:
-        super().__init__(position, groups, spritesheet, health, iframes)
-
-        self.speed = speed
-        self.speed_v = 0
-        self.frame_span = 100
-
-
-class Player(Entity):
-    def __init__(self, 
-                 position: tuple[int, int], 
-                 groups,
-                 spritesheet,
-                 health: int = 1000, 
-                 speed: int = 5,
-                 iframes: int = 800,
                  physical_power: int = 40,
-                 magic_power: int = 40,
-                 cd_parry: int = 1500) -> None:
+                 jump_power: int = 5,
+                 iframes: int = 500,
+                 gravity: float = 0.2) -> None:
         super().__init__(position, groups, spritesheet, health, iframes)
 
         self.speed = speed
         self.speed_v = 0
-        self.speed_roll = 7
         self.frame_span = 100
-
-        self.cd_parry = cd_parry
-        self.parry_moment = 0
-        self.cd_roll = 1500#cd_roll
-        self.roll_moment = 0
-
-        self.selected_attack = 0
-
-        self.gravity = 0.2
-        self.jump_power = 8
+        self.physical_power = physical_power
+        self.gravity = gravity
+        self.jump_power = jump_power
 
         self.actions = { 
                          'moving': {'flag': False, 'function': self.move},
-                         'rolling': {'flag': False, 'function': self.roll},
                          'jumping': {'flag': False, 'function': self.jump},
                          'falling': {'flag': True, 'function': self.fall},
-                         'attacking': {'flag': False, 'function': self.attack},
-                         'parry': {'flag': False, 'function': self.block},
-                         'wall_sliding': {'flag': False, 'function': self.wall_slide}
                        }
-
+        
     def update(self, keydown_keys: list):
         
         self.detect_actions(keydown_keys)
@@ -151,15 +123,108 @@ class Player(Entity):
             self.image = self.animations[self.facing][key_animation][self.current_sprite]
             self.last_update = current_time
 
-            
+    def any_action(self, exclude: str = "") -> bool:
+        flag = False
+        for key, value in self.actions.items():
+            if value['flag'] and key != exclude:
+                flag = True
+                break
+        return flag
+
+    def detect_actions(self, keys: list):
+        # Movimiento horizontal
+        if self.rect.right >= SCREEN_WIDTH:
+            self.facing = "b"
+        elif self.rect.left <= 0:
+            self.facing = "f"
+        self.actions['moving']['flag'] = True
+
+        # Caida
+        if self.rect.bottom < SCREEN_HEIGHT and not self.actions['jumping']['flag']:
+            self.actions['falling']['flag'] = True
+        else:
+            self.actions['falling']['flag'] = False
+
+        for action in self.actions.values():
+            if action['flag']:
+                action['function']()
+
+    def move(self):
+        self.selected_animation = "run"
+        if self.facing == "f":
+            self.rect.x += self.speed
+        if self.facing == "b":
+            self.rect.x -= self.speed
+
+    def jump(self):
+        self.selected_animation = "jump"
+        self.rect.y -= self.speed_v
+        self.speed_v -= self.gravity
+        if self.speed_v <= 0:
+            self.actions['falling']['flag'] = True
+            self.actions['jumping']['flag'] = False
+
+    def fall(self):
+        self.selected_animation = 'fall'
+        self.rect.y += self.speed_v
+        self.speed_v += self.gravity
+
+    
+
+class Player2(Character):
+    def __init__(self, 
+                 position: tuple[int, int], 
+                 groups, 
+                 spritesheet: SpriteSheet, 
+                 health: int = 200, 
+                 speed: int = 5, 
+                 physical_power: int = 40, 
+                 jump_power: int = 5, 
+                 iframes: int = 500, 
+                 gravity: float = 0.2) -> None:
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity)
+
+
+
+class Player(Character):
+    def __init__(self,
+                 position: tuple[int, int],
+                 groups,
+                 spritesheet: SpriteSheet,
+                 health: int = 200, 
+                 speed: int = 5, 
+                 physical_power: int = 40,
+                 magic_power: int = 40,
+                 jump_power: int = 5, 
+                 iframes: int = 500, 
+                 cd_parry: int = 1500,
+                 cd_roll: int = 1500,
+                 speed_roll: int = 7,
+                 gravity: float = 0.2
+                ) -> None:
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity)
+
+        self.speed_roll = speed_roll
+        self.cd_roll = cd_roll
+        self.roll_moment = 0
+
+        self.cd_parry = cd_parry
+        self.parry_moment = 0
+
+        self.actions = { 
+                         'moving': {'flag': False, 'function': self.move},
+                         'rolling': {'flag': False, 'function': self.roll},
+                         'jumping': {'flag': False, 'function': self.jump},
+                         'falling': {'flag': True, 'function': self.fall},
+                         'attacking': {'flag': False, 'function': self.attack},
+                         'parry': {'flag': False, 'function': self.block},
+                         'wall_sliding': {'flag': False, 'function': self.wall_slide}
+                       }
+        
     def detect_actions(self, keys: list):
         # Movimiento horizontal
         if not self.any_action() or self.actions['falling']['flag'] \
            or self.actions['jumping']['flag'] or self.actions['moving']['flag']:
-            
-                
-            
-
             if K_d in keys and self.rect.right <= SCREEN_WIDTH:
                 self.facing = "f"
                 self.actions['moving']['flag'] = True
@@ -280,12 +345,4 @@ class Player(Entity):
         if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
             self.actions['rolling']['flag'] = False
             self.intangible = False
-
-    def any_action(self, exclude: str = "") -> bool:
-        flag = False
-        for key, value in self.actions.items():
-            if value['flag'] and key != exclude:
-                flag = True
-                break
-
-        return flag
+        
