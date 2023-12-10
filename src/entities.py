@@ -10,7 +10,8 @@ class Entity(pygame.sprite.Sprite):
                  groups,
                  spritesheet: SpriteSheet,
                  health: int = 1,
-                 iframes: int = 500) -> None:
+                 iframes: int = 500,
+                 hitbox_scale: tuple = (1, 1)) -> None:
         
         super().__init__(groups)
         
@@ -20,9 +21,12 @@ class Entity(pygame.sprite.Sprite):
         self.animations_backwards = self.spritesheet.get_animations(flip=True)
         self.animations = {'f': self.animations_forwards, 'b': self.animations_backwards}
         self.image = self.__set_default_sprite()
-        self.rect: pygame.Rect = self.image.get_rect( center = position )
+
         self.selected_animation = "idle"
         self.facing = 'f'
+        self.rect: pygame.Rect = self.image.get_rect( center = position )
+
+        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
 
         self.__health = health
 
@@ -35,12 +39,24 @@ class Entity(pygame.sprite.Sprite):
         self.current_sprite = 0
         self.frame_span = 100
 
+        self.actions = {'hurt': {'flag': False, 'function': self.hurt_animation}}
+
+    def update(self):
+        self.hitbox.midbottom = self.rect.midbottom
+
     def hurt(self, damage:int):
         if self.__vulnerable and not self.__intangible:
             self.__vulnerable = False
             self.__health -= damage
             self.__hurt_moment = pygame.time.get_ticks()
-            print("herido")
+            # debería ser 0, pero si lo pongo así se salta el primer frame, así que va -1
+            self.current_sprite = -1
+            self.actions['hurt']['flag'] = True
+
+    def hurt_animation(self):
+        self.selected_animation = "hurt"
+        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+            self.actions['hurt']['flag'] = False
 
 
     def time_iframes(self, tiempo_actual:int):
@@ -53,6 +69,9 @@ class Entity(pygame.sprite.Sprite):
             # self.groups_animations = list(self.animations.values())
             image = self.animations['f'][keys_animations[0]][0]
             return image
+        
+    def draw_rect(self, surface: pygame.Surface, color: tuple):
+        pygame.draw.rect(surface, color, self.hitbox, 2)
 
 
     @property
@@ -84,8 +103,9 @@ class Character(Entity):
                  physical_power: int = 40,
                  jump_power: int = 5,
                  iframes: int = 500,
-                 gravity: float = 0.2) -> None:
-        super().__init__(position, groups, spritesheet, health, iframes)
+                 gravity: float = 0.2,
+                 hitbox_scale: tuple = (1, 1)) -> None:
+        super().__init__(position, groups, spritesheet, health, iframes, hitbox_scale)
 
         self.speed = speed
         self.speed_v = 0
@@ -98,15 +118,17 @@ class Character(Entity):
                          'moving': {'flag': False, 'function': self.move},
                          'jumping': {'flag': False, 'function': self.jump},
                          'falling': {'flag': True, 'function': self.fall},
+                         'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
         
-    def update(self, keydown_keys: list):
+    def update(self, _):
+        super().update()
         
-        self.detect_actions(keydown_keys)
+        self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
 
-        if self.rect.bottom > SCREEN_HEIGHT:
+        if self.hitbox.bottom > SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
 
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
@@ -131,16 +153,16 @@ class Character(Entity):
                 break
         return flag
 
-    def detect_actions(self, keys: list):
+    def detect_actions(self, _):
         # Movimiento horizontal
-        if self.rect.right >= SCREEN_WIDTH:
+        if self.hitbox.right >= SCREEN_WIDTH:
             self.facing = "b"
-        elif self.rect.left <= 0:
+        elif self.hitbox.left <= 0:
             self.facing = "f"
         self.actions['moving']['flag'] = True
 
         # Caida
-        if self.rect.bottom < SCREEN_HEIGHT and not self.actions['jumping']['flag']:
+        if self.hitbox.bottom < SCREEN_HEIGHT and not self.actions['jumping']['flag']:
             self.actions['falling']['flag'] = True
         else:
             self.actions['falling']['flag'] = False
@@ -169,9 +191,8 @@ class Character(Entity):
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
 
-    
 
-class Player2(Character):
+class NightBorne(Character):
     def __init__(self, 
                  position: tuple[int, int], 
                  groups, 
@@ -181,9 +202,31 @@ class Player2(Character):
                  physical_power: int = 40, 
                  jump_power: int = 5, 
                  iframes: int = 500, 
-                 gravity: float = 0.2) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity)
+                 gravity: float = 0.2, 
+                 hitbox_scale: tuple = (1, 1)) -> None:
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
 
+        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
+
+    def update(self, _):
+        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - 30)
+        
+        self.detect_actions(_)
+        if not self.any_action():
+            self.selected_animation = "idle"
+
+        if self.hitbox.bottom > SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
+
+        if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
+            self.speed_v = 0
+        
+        self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
+
+    def fall(self):
+        self.selected_animation = 'run'
+        self.rect.y += self.speed_v
+        self.speed_v += self.gravity
 
 
 class Player(Character):
@@ -200,9 +243,10 @@ class Player(Character):
                  cd_parry: int = 1500,
                  cd_roll: int = 1500,
                  speed_roll: int = 7,
-                 gravity: float = 0.2
+                 gravity: float = 0.2,
+                 hitbox_scale: tuple = (1, 1)
                 ) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity)
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
 
         self.speed_roll = speed_roll
         self.cd_roll = cd_roll
@@ -218,17 +262,18 @@ class Player(Character):
                          'falling': {'flag': True, 'function': self.fall},
                          'attacking': {'flag': False, 'function': self.attack},
                          'parry': {'flag': False, 'function': self.block},
-                         'wall_sliding': {'flag': False, 'function': self.wall_slide}
+                         'wall_sliding': {'flag': False, 'function': self.wall_slide},
+                         'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
         
     def detect_actions(self, keys: list):
         # Movimiento horizontal
         if not self.any_action() or self.actions['falling']['flag'] \
            or self.actions['jumping']['flag'] or self.actions['moving']['flag']:
-            if K_d in keys and self.rect.right <= SCREEN_WIDTH:
+            if K_d in keys and self.hitbox.right <= SCREEN_WIDTH:
                 self.facing = "f"
                 self.actions['moving']['flag'] = True
-            elif K_a in keys and self.rect.left >= 0:
+            elif K_a in keys and self.hitbox.left >= 0:
                 self.facing = "b"
                 self.actions['moving']['flag'] = True
             else:
@@ -266,13 +311,13 @@ class Player(Character):
                 self.current_sprite = 0
 
         # Caida
-        if self.rect.bottom < SCREEN_HEIGHT and not self.actions['wall_sliding']['flag'] and not self.actions['jumping']['flag']:
+        if self.hitbox.bottom < SCREEN_HEIGHT and not self.actions['wall_sliding']['flag'] and not self.actions['jumping']['flag']:
             self.actions['falling']['flag'] = True
         else:
             self.actions['falling']['flag'] = False
 
         # Wall slide
-        if (self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH):
+        if (self.hitbox.left <= 0 or self.hitbox.right >= SCREEN_WIDTH):
             if (self.actions['jumping']['flag'] or self.actions['falling']['flag']):
                 self.actions['wall_sliding']['flag'] = True
         else:
@@ -318,9 +363,9 @@ class Player(Character):
         self.actions['rolling']['flag'] = False
         self.rect.y -= self.speed_v
         self.speed_v -= self.gravity
-        if self.rect.left <= 0:
+        if self.hitbox.left <= 0:
             self.rect.move_ip(6, 0)
-        if self.rect.right >= SCREEN_WIDTH:
+        if self.hitbox.right >= SCREEN_WIDTH:
             self.rect.move_ip(-6, 0)
         if self.speed_v <= 0:
             self.actions['falling']['flag'] = True
@@ -340,7 +385,7 @@ class Player(Character):
 
     def roll(self):
         self.selected_animation = "roll"
-        if self.rect.left >= 0 and self.rect.right <= SCREEN_WIDTH:
+        if self.hitbox.left >= 0 and self.hitbox.right <= SCREEN_WIDTH:
             self.rect.move_ip(self.speed_roll, 0) if self.facing == 'f' else self.rect.move_ip(-self.speed_roll, 0)
         if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
             self.actions['rolling']['flag'] = False
