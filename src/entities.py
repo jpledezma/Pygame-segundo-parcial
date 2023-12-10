@@ -300,6 +300,21 @@ class BringerOfDeath(Character):
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
 
+class ShurikenDude(Character):
+    def __init__(self, position: tuple[int, int], groups, spritesheet: SpriteSheet, health: int = 200, speed: int = 5, physical_power: int = 40, jump_power: int = 5, iframes: int = 500, gravity: float = 0.2, hitbox_scale: tuple = (1, 1)) -> None:
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
+        
+        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
+        self.fix_coefficient = 0.225
+
+    def fall(self):
+        self.selected_animation = 'idle'
+        self.rect.y += self.speed_v
+        self.speed_v += self.gravity
+
+    def move(self):
+        self.selected_animation = 'idle'
+
 
 class Player(Character):
     def __init__(self,
@@ -366,6 +381,7 @@ class Player(Character):
             keys.remove(K_j)
             self.actions['parry']['flag'] = False
             self.actions['moving']['flag'] = False
+            self.actions['rolling']['flag'] = False
             if self.actions['attacking']['flag'] and self.current_attack < 3:
                 self.current_attack += 1 
             else:
@@ -377,6 +393,8 @@ class Player(Character):
         if K_k in keys:
             keys.remove(K_k)
             self.actions['moving']['flag'] = False
+            self.actions['rolling']['flag'] = False
+            self.actions['attacking']['flag'] = False
             if not self.actions['parry']['flag'] and pygame.time.get_ticks() >= self.parry_moment + self.cd_parry:
                 self.parry_moment = pygame.time.get_ticks()
                 self.actions['parry']['flag'] = True

@@ -2,6 +2,8 @@ import pygame
 from pygame.locals import *
 from config import *
 from entities import *
+import json
+import os
 
 class Game:
     def __init__(self) -> None:
@@ -12,43 +14,33 @@ class Game:
         pygame.display.set_icon(ICON_IMG)
 
         self.all_sprites = pygame.sprite.Group()
-
-        self.path_player = "assets/sprites/jugador/HeroKnight.png"
-        self.path_nightborne = "assets/sprites/enemigos/NightBorne.png"
-        self.path_evil_wizard = "assets/sprites/enemigos/EvilWizard.png"
-        self.path_bringer_of_death = "assets/sprites/enemigos/BringerOfDeath.png"
-
-        self.all_sprites = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
 
-        anim_keys_player = ['idle', 'run', 'at1', 'at2', 'at3', 'jump', 'fall', 'hurt', 'death', 'block_idle', 'block', 'roll', 'ledge_grab', 'wall_slide']
-        anim_frames_player = [8, 10, 6, 6, 8, 3, 4, 3, 10, 8, 5, 9, 5, 5]
+        self.sprites_data_path = os.path.join(os.getcwd(), "data", "surfaces.json")
 
-        anim_keys_nightborne = ['idle', 'run', 'jump', 'attack', 'hurt', 'death']
-        anim_frames_nightborne = [9, 6, 5, 12, 5, 23]
+        with open(self.sprites_data_path, "r", encoding="utf-8") as file:
+            sprites_data = json.load(file)
+
+        player_img = pygame.image.load(sprites_data["player"]["path"]).convert_alpha()
+        player_spritesheet = SpriteSheet(player_img, sprites_data["player"]["rows"], sprites_data["player"]["cols"], sprites_data["player"]["width"], sprites_data["player"]["height"], sprites_data["player"]["anim_keys"], sprites_data["player"]["anim_frames"], 2)
+
+        nightborne_img = pygame.image.load(sprites_data["nightborne"]["path"]).convert_alpha()
+        nightborne_spritesheet = SpriteSheet(nightborne_img, sprites_data["nightborne"]["rows"], sprites_data["nightborne"]["cols"], sprites_data["nightborne"]["width"], sprites_data["nightborne"]["height"], sprites_data["nightborne"]["anim_keys"], sprites_data["nightborne"]["anim_frames"], 2.5)
+
+        evil_wizard_img = pygame.image.load(sprites_data["evil_wizard"]["path"]).convert_alpha()
+        evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, sprites_data["evil_wizard"]["rows"], sprites_data["evil_wizard"]["cols"], sprites_data["evil_wizard"]["width"], sprites_data["evil_wizard"]["height"], sprites_data["evil_wizard"]["anim_keys"], sprites_data["evil_wizard"]["anim_frames"], 2)
+
+        bringer_of_death_img = pygame.image.load(sprites_data["bringer_of_death"]["path"]).convert_alpha()
+        bringer_of_death_spritesheet = SpriteSheet(bringer_of_death_img, sprites_data["bringer_of_death"]["rows"], sprites_data["bringer_of_death"]["cols"], sprites_data["bringer_of_death"]["width"], sprites_data["bringer_of_death"]["height"], sprites_data["bringer_of_death"]["anim_keys"], sprites_data["bringer_of_death"]["anim_frames"], 3)
         
-        anim_keys_evil_wizard = ['idle', 'run', 'attack', 'hurt', 'death']
-        anim_frames_evil_wizard = [8, 8, 10, 5, 5]
-        
-        anim_keys_bringer_of_death = ['idle', 'run', 'attack', 'hurt', 'death', 'cast']
-        anim_frames_bringer_of_death = [8, 8, 10, 3, 10, 9]
-
-        player_img = pygame.image.load(self.path_player).convert_alpha()
-        player_spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, anim_keys_player, anim_frames_player, 2)
-
-        nightborne_img = pygame.image.load(self.path_nightborne).convert_alpha()
-        nightborne_spritesheet = SpriteSheet(nightborne_img, 6, 10, 80, 80, anim_keys_nightborne, anim_frames_nightborne, 2.5)
-
-        evil_wizard_img = pygame.image.load(self.path_evil_wizard).convert_alpha()
-        evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, 6, 6, 150, 150, anim_keys_evil_wizard, anim_frames_evil_wizard, 2)
-
-        bringer_of_death_img = pygame.image.load(self.path_bringer_of_death).convert_alpha()
-        bringer_of_death_spritesheet = SpriteSheet(bringer_of_death_img, 6, 8, 140, 93, anim_keys_bringer_of_death, anim_frames_bringer_of_death, 3)
+        shuriken_dude_img = pygame.image.load(sprites_data["shuriken_dude"]["path"]).convert_alpha()
+        shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 1.5)
 
         self.player = Player((250, 250), self.all_sprites, player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
         self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
         self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.35), gravity=0.1)
         self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies), bringer_of_death_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.6), gravity=0.1)
+        self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies), shuriken_dude_spritesheet, 1500, 4, hitbox_scale=(0.45, 0.85), gravity=0.1)
 
         self.keydown_keys = []
 
