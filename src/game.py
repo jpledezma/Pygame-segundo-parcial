@@ -16,6 +16,7 @@ class Game:
         self.path_player = "assets/sprites/jugador/HeroKnight.png"
         self.path_nightborne = "assets/sprites/enemigos/NightBorne.png"
         self.path_evil_wizard = "assets/sprites/enemigos/EvilWizard.png"
+        self.path_bringer_of_death = "assets/sprites/enemigos/BringerOfDeath.png"
 
         self.all_sprites = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
@@ -26,8 +27,11 @@ class Game:
         anim_keys_nightborne = ['idle', 'run', 'jump', 'attack', 'hurt', 'death']
         anim_frames_nightborne = [9, 6, 5, 12, 5, 23]
         
-        anim_keys_evil_wizard = ['idle', 'run', 'attack', 'hurt', 'fall']
+        anim_keys_evil_wizard = ['idle', 'run', 'attack', 'hurt', 'death']
         anim_frames_evil_wizard = [8, 8, 10, 5, 5]
+        
+        anim_keys_bringer_of_death = ['idle', 'run', 'attack', 'hurt', 'death', 'cast']
+        anim_frames_bringer_of_death = [8, 8, 10, 3, 10, 9]
 
         player_img = pygame.image.load(self.path_player).convert_alpha()
         player_spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, anim_keys_player, anim_frames_player, 2)
@@ -38,9 +42,13 @@ class Game:
         evil_wizard_img = pygame.image.load(self.path_evil_wizard).convert_alpha()
         evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, 6, 6, 150, 150, anim_keys_evil_wizard, anim_frames_evil_wizard, 2)
 
+        bringer_of_death_img = pygame.image.load(self.path_bringer_of_death).convert_alpha()
+        bringer_of_death_spritesheet = SpriteSheet(bringer_of_death_img, 6, 8, 140, 93, anim_keys_bringer_of_death, anim_frames_bringer_of_death, 3)
+
         self.player = Player((250, 250), self.all_sprites, player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
         self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
-        self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.35, 0.35), gravity=0.1)
+        self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.35), gravity=0.1)
+        self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies), bringer_of_death_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.6), gravity=0.1)
 
         self.keydown_keys = []
 
@@ -93,7 +101,7 @@ class Game:
             if enemy.health <= 0:
                 enemy.kill()
         self.all_sprites.update(self.keydown_keys)
-        print(self.player.health, self.nightborne.health, self.evil_wizard.health)
+        # print(self.player.health, self.nightborne.health, self.evil_wizard.health)
 
         pygame.display.flip()
 

@@ -208,16 +208,15 @@ class NightBorne(Character):
         super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
 
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
+        self.fix_coefficient = 0.15
 
     def update(self, _):
-        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - 30)
+        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.height * self.fix_coefficient)
+        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - self.rect.height * self.fix_coefficient)
         
         self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
-
-        # if self.hitbox.bottom > SCREEN_HEIGHT:
-        #     self.rect.bottom = SCREEN_HEIGHT
 
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
@@ -244,16 +243,52 @@ class EvilWizard(Character):
         super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
 
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
+        self.fix_coefficient = 0.3
 
     def update(self, _):
-        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - 90)
+        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - self.rect.height * self.fix_coefficient)
         
         self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
 
-        # if self.hitbox.bottom > SCREEN_HEIGHT:
-            # self.rect.bottom = SCREEN_HEIGHT
+        if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
+            self.speed_v = 0
+        
+        self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
+
+    def fall(self):
+        self.selected_animation = 'run'
+        self.rect.y += self.speed_v
+        self.speed_v += self.gravity
+
+
+class BringerOfDeath(Character):
+    def __init__(self, 
+                 position: tuple[int, int], 
+                 groups, 
+                 spritesheet: SpriteSheet, 
+                 health: int = 200, 
+                 speed: int = 5, 
+                 physical_power: int = 40, 
+                 jump_power: int = 5, 
+                 iframes: int = 500, 
+                 gravity: float = 0.2, 
+                 hitbox_scale: tuple = (1, 1)) -> None:
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
+
+        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
+        self.fix_coefficient = 0.225
+
+    def update(self, _):
+        if self.facing == "f":
+            self.hitbox.midbottom = (self.rect.midbottom[0] - self.rect.width * self.fix_coefficient, self.rect.midbottom[1])
+        else:
+            self.hitbox.midbottom = (self.rect.midbottom[0] + self.rect.width * self.fix_coefficient, self.rect.midbottom[1])
+        
+        self.detect_actions(_)
+        if not self.any_action():
+            self.selected_animation = "idle"
 
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
