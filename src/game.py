@@ -15,6 +15,7 @@ class Game:
 
         self.path_player = "assets/sprites/jugador/HeroKnight.png"
         self.path_nightborne = "assets/sprites/enemigos/NightBorne.png"
+        self.path_evil_wizard = "assets/sprites/enemigos/EvilWizard.png"
 
         self.all_sprites = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
@@ -24,15 +25,22 @@ class Game:
 
         anim_keys_nightborne = ['idle', 'run', 'jump', 'attack', 'hurt', 'death']
         anim_frames_nightborne = [9, 6, 5, 12, 5, 23]
-
-        nightborne_img = pygame.image.load(self.path_nightborne).convert_alpha()
-        enemy_spritesheet = SpriteSheet(nightborne_img, 6, 10, 80, 80, anim_keys_nightborne, anim_frames_nightborne, 2.5)
+        
+        anim_keys_evil_wizard = ['idle', 'run', 'attack', 'hurt', 'fall']
+        anim_frames_evil_wizard = [8, 8, 10, 5, 5]
 
         player_img = pygame.image.load(self.path_player).convert_alpha()
         player_spritesheet = SpriteSheet(player_img, 9, 10, 100, 55, anim_keys_player, anim_frames_player, 2)
 
+        nightborne_img = pygame.image.load(self.path_nightborne).convert_alpha()
+        nightborne_spritesheet = SpriteSheet(nightborne_img, 6, 10, 80, 80, anim_keys_nightborne, anim_frames_nightborne, 2.5)
+
+        evil_wizard_img = pygame.image.load(self.path_evil_wizard).convert_alpha()
+        evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, 6, 6, 150, 150, anim_keys_evil_wizard, anim_frames_evil_wizard, 2)
+
         self.player = Player((250, 250), self.all_sprites, player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
-        self.enemy = NightBorne((380, 100), (self.all_sprites, self.enemies), enemy_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.5))
+        self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
+        self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.35, 0.35), gravity=0.1)
 
         self.keydown_keys = []
 
@@ -81,11 +89,11 @@ class Game:
             if enemy.hitbox.colliderect(self.player.hitbox):
                 self.player.hurt(enemy.physical_power)
                 if self.player.actions['attacking']['flag']:
-                    self.enemy.hurt(500)
+                    enemy.hurt(500)
             if enemy.health <= 0:
                 enemy.kill()
         self.all_sprites.update(self.keydown_keys)
-        print(self.player.health, self.enemy.health)
+        print(self.player.health, self.nightborne.health, self.evil_wizard.health)
 
         pygame.display.flip()
 
