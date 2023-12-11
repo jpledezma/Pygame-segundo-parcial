@@ -6,6 +6,8 @@ from platforms import *
 import os
 from utils import *
 
+# TODO Colisiones con las plataformas
+
 class Game:
     def __init__(self) -> None:
         pygame.init()
@@ -56,11 +58,11 @@ class Game:
         shuriken_dude_img = pygame.image.load(sprites_data["shuriken_dude"]["path"]).convert_alpha()
         shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 0.8)
 
-        self.player = Player((250, 250), (self.all_sprites, self.entities), player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
-        self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies, self.entities), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
-        self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.35), gravity=0.1)
-        self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies, self.entities), bringer_of_death_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.6), gravity=0.1)
-        self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies, self.entities), shuriken_dude_spritesheet, 1500, 4, hitbox_scale=(0.45, 0.85), gravity=0.1)
+        self.player = Player((200, 400), (self.all_sprites, self.entities), player_spritesheet, health=1000, speed=3, physical_power=40, magic_power=40, jump_power=6, iframes=1000, speed_roll=3, gravity=0.2, hitbox_scale=(0.3, 0.78))
+        # self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies, self.entities), nightborne_spritesheet, 1500, 1, hitbox_scale=(0.5, 0.45))
+        # self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.35), gravity=0.1)
+        # self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies, self.entities), bringer_of_death_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.6), gravity=0.1)
+        # self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies, self.entities), shuriken_dude_spritesheet, 1500, 1, hitbox_scale=(0.45, 0.85), gravity=0.1)
 
         self.keydown_keys = []
 
@@ -96,12 +98,15 @@ class Game:
     def draw(self):
         for background in self.oak_woods_background_layers:
             self.screen.blit(background, (0, 0))
-        self.all_sprites.draw(self.screen)
-        for sprite in self.entities:
-            sprite.draw_rect(self.screen, (0,0,0)) 
 
+        self.all_sprites.draw(self.screen)
+        
         for entity in self.entities:
+            entity.draw_rect(self.screen, (250,250,250)) 
             entity.time_iframes(pygame.time.get_ticks())
+
+        for platform in self.platforms:
+            platform.draw_rect(self.screen, (250,0,0)) 
 
     def update(self):
 
