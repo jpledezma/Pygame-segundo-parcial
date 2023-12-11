@@ -1,0 +1,9 @@
+{
+    "oak_woods": {
+        "path_img": "assets/tiles/oak_woods_tileset.png",
+        "path_map": "data/tiles_map_1.csv",
+        "tile_width": 24,
+        "tile_height": 24,
+        "background_layers": ["assets/backgrounds/oak_woods_background_layer_1.png", "assets/backgrounds/oak_woods_background_layer_2.png", "assets/backgrounds/oak_woods_background_layer_3.png"]
+    }
+}

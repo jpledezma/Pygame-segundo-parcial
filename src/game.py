@@ -2,8 +2,9 @@ import pygame
 from pygame.locals import *
 from config import *
 from entities import *
-import json
+from platforms import *
 import os
+from utils import *
 
 class Game:
     def __init__(self) -> None:
@@ -14,12 +15,31 @@ class Game:
         pygame.display.set_icon(ICON_IMG)
 
         self.all_sprites = pygame.sprite.Group()
+        self.entities = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
+        self.platforms = pygame.sprite.Group()
 
-        self.sprites_data_path = os.path.join(os.getcwd(), "data", "surfaces.json")
+        self.sprites_data_path = os.path.join(os.getcwd(), "data", "sprites.json")
+        sprites_data = read_json(self.sprites_data_path)
 
-        with open(self.sprites_data_path, "r", encoding="utf-8") as file:
-            sprites_data = json.load(file)
+        self.tile_sets_data_path = os.path.join(os.getcwd(), "data", "tile_sets.json")
+        tile_sets_data = read_json(self.tile_sets_data_path)
+
+        oak_woods_tileset_img = pygame.image.load(tile_sets_data["oak_woods"]["path_img"])
+        oak_woods_tileset = Tileset(oak_woods_tileset_img, tile_sets_data["oak_woods"]["tile_width"], tile_sets_data["oak_woods"]["tile_height"])
+
+        self.oak_woods_background_layers = []
+        for background_path in tile_sets_data["oak_woods"]["background_layers"]:
+            background_layer = pygame.image.load(background_path)
+            background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
+            background_layer = background_layer.convert_alpha()
+            self.oak_woods_background_layers.append(background_layer)
+
+        oak_woods_tile_map = read_tile_map("data/tiles_map_1.csv")
+        self.oak_woods_surfaces_list = oak_woods_tileset.get_map(oak_woods_tile_map)
+
+        for item in self.oak_woods_surfaces_list:
+            Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
         player_img = pygame.image.load(sprites_data["player"]["path"]).convert_alpha()
         player_spritesheet = SpriteSheet(player_img, sprites_data["player"]["rows"], sprites_data["player"]["cols"], sprites_data["player"]["width"], sprites_data["player"]["height"], sprites_data["player"]["anim_keys"], sprites_data["player"]["anim_frames"], 2)
@@ -36,15 +56,14 @@ class Game:
         shuriken_dude_img = pygame.image.load(sprites_data["shuriken_dude"]["path"]).convert_alpha()
         shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 1.5)
 
-        self.player = Player((250, 250), self.all_sprites, player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
-        self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
-        self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.35), gravity=0.1)
-        self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies), bringer_of_death_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.6), gravity=0.1)
-        self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies), shuriken_dude_spritesheet, 1500, 4, hitbox_scale=(0.45, 0.85), gravity=0.1)
+        self.player = Player((250, 250), (self.all_sprites, self.entities), player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
+        self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies, self.entities), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
+        self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.35), gravity=0.1)
+        self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies, self.entities), bringer_of_death_spritesheet, 1500, 4, hitbox_scale=(0.3, 0.6), gravity=0.1)
+        self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies, self.entities), shuriken_dude_spritesheet, 1500, 4, hitbox_scale=(0.45, 0.85), gravity=0.1)
 
         self.keydown_keys = []
 
-        # self.platforms = pygame.sprite.Group()
         
     def run(self):
         running = True
@@ -75,11 +94,13 @@ class Game:
 
     def draw(self):
         self.screen.fill(LIGHT_BLUE)
+        for background in self.oak_woods_background_layers:
+            self.screen.blit(background, (0, 0))
         self.all_sprites.draw(self.screen)
-        for sprite in self.all_sprites:
+        for sprite in self.entities:
             sprite.draw_rect(self.screen, (0,0,0)) 
 
-        for entity in self.all_sprites:
+        for entity in self.entities:
             entity.time_iframes(pygame.time.get_ticks())
 
     def update(self):
