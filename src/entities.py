@@ -122,10 +122,9 @@ class Character(Entity):
                          'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
         
-    def update(self, _):
+    def update(self):
         super().update()
         
-        self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
 
@@ -154,7 +153,7 @@ class Character(Entity):
                 break
         return flag
 
-    def detect_actions(self, _):
+    def detect_actions(self, platforms_list):
         # Movimiento horizontal
         if self.hitbox.right >= SCREEN_WIDTH:
             self.facing = "b"
@@ -210,11 +209,10 @@ class NightBorne(Character):
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
         self.fix_coefficient = 0.15
 
-    def update(self, _):
+    def update(self):
         self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.height * self.fix_coefficient)
         self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - self.rect.height * self.fix_coefficient)
         
-        self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
 
@@ -245,10 +243,9 @@ class EvilWizard(Character):
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
         self.fix_coefficient = 0.3
 
-    def update(self, _):
+    def update(self):
         self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - self.rect.height * self.fix_coefficient)
         
-        self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
 
@@ -280,13 +277,12 @@ class BringerOfDeath(Character):
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
         self.fix_coefficient = 0.225
 
-    def update(self, _):
+    def update(self):
         if self.facing == "f":
             self.hitbox.midbottom = (self.rect.midbottom[0] - self.rect.width * self.fix_coefficient, self.rect.midbottom[1])
         else:
             self.hitbox.midbottom = (self.rect.midbottom[0] + self.rect.width * self.fix_coefficient, self.rect.midbottom[1])
         
-        self.detect_actions(_)
         if not self.any_action():
             self.selected_animation = "idle"
 
@@ -353,7 +349,7 @@ class Player(Character):
                          'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
         
-    def detect_actions(self, keys: list):
+    def detect_actions(self, platforms_list, keys: list):
         # Movimiento horizontal
         if not self.any_action() or self.actions['falling']['flag'] \
            or self.actions['jumping']['flag'] or self.actions['moving']['flag']:

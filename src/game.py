@@ -35,26 +35,26 @@ class Game:
             background_layer = background_layer.convert_alpha()
             self.oak_woods_background_layers.append(background_layer)
 
-        oak_woods_tile_map = read_tile_map("data/tiles_map_1.csv")
+        oak_woods_tile_map = read_tile_map(tile_sets_data["oak_woods"]["path_map"])
         self.oak_woods_surfaces_list = oak_woods_tileset.get_map(oak_woods_tile_map)
 
         for item in self.oak_woods_surfaces_list:
             Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
         player_img = pygame.image.load(sprites_data["player"]["path"]).convert_alpha()
-        player_spritesheet = SpriteSheet(player_img, sprites_data["player"]["rows"], sprites_data["player"]["cols"], sprites_data["player"]["width"], sprites_data["player"]["height"], sprites_data["player"]["anim_keys"], sprites_data["player"]["anim_frames"], 2)
+        player_spritesheet = SpriteSheet(player_img, sprites_data["player"]["rows"], sprites_data["player"]["cols"], sprites_data["player"]["width"], sprites_data["player"]["height"], sprites_data["player"]["anim_keys"], sprites_data["player"]["anim_frames"], 1)
 
         nightborne_img = pygame.image.load(sprites_data["nightborne"]["path"]).convert_alpha()
-        nightborne_spritesheet = SpriteSheet(nightborne_img, sprites_data["nightborne"]["rows"], sprites_data["nightborne"]["cols"], sprites_data["nightborne"]["width"], sprites_data["nightborne"]["height"], sprites_data["nightborne"]["anim_keys"], sprites_data["nightborne"]["anim_frames"], 2.5)
+        nightborne_spritesheet = SpriteSheet(nightborne_img, sprites_data["nightborne"]["rows"], sprites_data["nightborne"]["cols"], sprites_data["nightborne"]["width"], sprites_data["nightborne"]["height"], sprites_data["nightborne"]["anim_keys"], sprites_data["nightborne"]["anim_frames"], 1.2)
 
         evil_wizard_img = pygame.image.load(sprites_data["evil_wizard"]["path"]).convert_alpha()
-        evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, sprites_data["evil_wizard"]["rows"], sprites_data["evil_wizard"]["cols"], sprites_data["evil_wizard"]["width"], sprites_data["evil_wizard"]["height"], sprites_data["evil_wizard"]["anim_keys"], sprites_data["evil_wizard"]["anim_frames"], 2)
+        evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, sprites_data["evil_wizard"]["rows"], sprites_data["evil_wizard"]["cols"], sprites_data["evil_wizard"]["width"], sprites_data["evil_wizard"]["height"], sprites_data["evil_wizard"]["anim_keys"], sprites_data["evil_wizard"]["anim_frames"], 1.2)
 
         bringer_of_death_img = pygame.image.load(sprites_data["bringer_of_death"]["path"]).convert_alpha()
-        bringer_of_death_spritesheet = SpriteSheet(bringer_of_death_img, sprites_data["bringer_of_death"]["rows"], sprites_data["bringer_of_death"]["cols"], sprites_data["bringer_of_death"]["width"], sprites_data["bringer_of_death"]["height"], sprites_data["bringer_of_death"]["anim_keys"], sprites_data["bringer_of_death"]["anim_frames"], 3)
+        bringer_of_death_spritesheet = SpriteSheet(bringer_of_death_img, sprites_data["bringer_of_death"]["rows"], sprites_data["bringer_of_death"]["cols"], sprites_data["bringer_of_death"]["width"], sprites_data["bringer_of_death"]["height"], sprites_data["bringer_of_death"]["anim_keys"], sprites_data["bringer_of_death"]["anim_frames"], 2)
         
         shuriken_dude_img = pygame.image.load(sprites_data["shuriken_dude"]["path"]).convert_alpha()
-        shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 1.5)
+        shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 0.8)
 
         self.player = Player((250, 250), (self.all_sprites, self.entities), player_spritesheet, 1000, 6, 40, 40, 7, 1000, gravity=0.2, hitbox_scale=(0.3, 0.78))
         self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies, self.entities), nightborne_spritesheet, 1500, 4, hitbox_scale=(0.5, 0.45))
@@ -63,6 +63,7 @@ class Game:
         self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies, self.entities), shuriken_dude_spritesheet, 1500, 4, hitbox_scale=(0.45, 0.85), gravity=0.1)
 
         self.keydown_keys = []
+
 
         
     def run(self):
@@ -93,7 +94,6 @@ class Game:
         self.close()
 
     def draw(self):
-        self.screen.fill(LIGHT_BLUE)
         for background in self.oak_woods_background_layers:
             self.screen.blit(background, (0, 0))
         self.all_sprites.draw(self.screen)
@@ -104,17 +104,18 @@ class Game:
             entity.time_iframes(pygame.time.get_ticks())
 
     def update(self):
-        # if self.enemy.rect.colliderect(self.player.rect):
-        #     self.player.hurt(self.enemy.physical_power)
+
+        self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
         for enemy in self.enemies:
+            enemy.detect_actions(self.platforms.sprites())
             if enemy.hitbox.colliderect(self.player.hitbox):
                 self.player.hurt(enemy.physical_power)
                 if self.player.actions['attacking']['flag']:
                     enemy.hurt(500)
             if enemy.health <= 0:
                 enemy.kill()
-        self.all_sprites.update(self.keydown_keys)
-        # print(self.player.health, self.nightborne.health, self.evil_wizard.health)
+
+        self.all_sprites.update()
 
         pygame.display.flip()
 

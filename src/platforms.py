@@ -14,7 +14,7 @@ class Platform(pygame.sprite.Sprite):
 
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
 
-    def update(self, _):
+    def update(self):
         self.hitbox.midbottom = self.rect.midbottom
         
     def draw_rect(self, surface: pygame.Surface, color: tuple):
