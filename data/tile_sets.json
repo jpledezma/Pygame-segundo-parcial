@@ -5,5 +5,13 @@
         "tile_width": 24,
         "tile_height": 24,
         "background_layers": ["assets/backgrounds/oak_woods_background_layer_1.png", "assets/backgrounds/oak_woods_background_layer_2.png", "assets/backgrounds/oak_woods_background_layer_3.png"]
+    },
+    "gothicvania_church": {
+        "path_img": "assets/tiles/gothicvania_church_tileset.png",
+        "path_map": "data/gothicvania_church_tiles_map.csv",
+        "path_decoration": "data/gothicvania_church_decoration_map.csv",
+        "tile_width": 32,
+        "tile_height": 32,
+        "background_layers": ["assets/backgrounds/gothicvania_church_background.png"]
     }
 }
