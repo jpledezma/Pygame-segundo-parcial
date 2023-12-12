@@ -401,13 +401,6 @@ class Player(Character):
                 self.actions['parry']['flag'] = True
                 self.current_sprite = 0
 
-        # Wall slide
-        if (self.hitbox.left <= 0 or self.hitbox.right >= SCREEN_WIDTH):
-            if (self.actions['jumping']['flag'] or self.actions['falling']['flag']):
-                self.actions['wall_sliding']['flag'] = True
-        else:
-            self.actions['wall_sliding']['flag'] = False
-
         # Roll
         if K_LSHIFT in keys:
             if not self.any_action("moving")  \
@@ -418,21 +411,47 @@ class Player(Character):
                 self.intangible = True
                 self.current_sprite = 0
                 keys.remove(K_LSHIFT)
+            if self.actions['wall_sliding']['flag']:
+                self.actions['wall_sliding']['flag'] = False
+                self.rect.x += 1 if self.facing == "b" else -1
         
+        # Detectar colisiones con las plataformas
         for platform in platforms_list:
-            if self.detect_horizontal_collision(platform):
+            if self.detect_horizontal_collision(platform.rect):
                 self.actions['moving']['flag'] = False
                 self.actions['rolling']['flag'] = False
-            if self.detect_top_platform_collision(platform):
+                # Wall slide
+                if self.actions['jumping']['flag'] or self.actions['falling']['flag']:
+                    self.actions['wall_sliding']['flag'] = True
+            if self.detect_top_platform_collision(platform.rect):
                 self.actions['falling']['flag'] = False
                 self.speed_v = 0
                 self.rect.bottom = platform.rect.top
-            elif self.detect_bottom_platform_collision(platform):
+            elif self.detect_bottom_platform_collision(platform.rect):
                 self.speed_v = 0
                 self.actions['jumping']['flag'] = False
                 self.actions['falling']['flag'] = True
 
-        print(self.speed_v)
+        # Detener el wall slide si no hay ninguna plataforma adyacente al jugador
+        if self.actions['wall_sliding']['flag']:
+            self.actions['wall_sliding']['flag'] = False
+            self.actions['falling']['flag'] = True
+            for platform in platforms_list:
+                if self.detect_horizontal_collision(platform.rect, 2):
+                    self.actions['wall_sliding']['flag'] = True
+                    self.actions['falling']['flag'] = False
+                    break
+
+        # Detectar colisiones con las plataformas * 2
+        for platform in platforms_list:
+            if not self.actions['jumping']['flag']:
+                self.actions['falling']['flag'] = True
+            # Si no hay nada abajo del pj, se cae
+            if platform.rect.colliderect((self.hitbox.x , self.hitbox.y + 1, self.hitbox.width, self.hitbox.height)):
+                self.actions['falling']['flag'] = False
+                break
+
+        print(self.actions['falling']['flag'], self.actions['wall_sliding']['flag'])
 
         # Ejecutar acciones
         for action in self.actions.values():
@@ -447,7 +466,6 @@ class Player(Character):
             if self.facing == "b":
                 self.rect.x -= self.speed
 
-
     def attack(self):
         self.selected_animation = f"at{self.current_attack}"
         if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
@@ -461,20 +479,22 @@ class Player(Character):
 
     def jump(self):
         self.selected_animation = "jump"
-        self.actions['wall_sliding']['flag'] = False
         self.actions['rolling']['flag'] = False
         self.rect.y -= self.speed_v
         self.speed_v -= self.gravity
-        if self.hitbox.left <= 0:
-            self.rect.move_ip(6, 0)
-        if self.hitbox.right >= SCREEN_WIDTH:
-            self.rect.move_ip(-6, 0)
+        if self.actions['wall_sliding']['flag']:
+            self.actions['wall_sliding']['flag'] = False
+            if self.facing == "b":
+                self.rect.move_ip(1, 0)
+            elif self.facing == "f":
+                self.rect.move_ip(-1, 0)
         if self.speed_v <= 0:
             self.actions['falling']['flag'] = True
             self.actions['jumping']['flag'] = False
 
     def fall(self):
         self.selected_animation = 'fall'
+        self.actions['rolling']['flag'] = False
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
 
@@ -487,30 +507,31 @@ class Player(Character):
 
     def roll(self):
         self.selected_animation = "roll"
-        if self.hitbox.left >= 0 and self.hitbox.right <= SCREEN_WIDTH: # Solucionar esto
+        if self.actions['rolling']['flag']:
             self.rect.move_ip(self.speed_roll, 0) if self.facing == 'f' else self.rect.move_ip(-self.speed_roll, 0)
         if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
             self.actions['rolling']['flag'] = False
             self.intangible = False
 
-    def detect_horizontal_collision(self, platform: Platform):
-        if platform.rect.colliderect((self.hitbox.x + self.speed, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
-        self.actions['moving']['flag'] and self.facing == 'f' and not platform.rect.colliderect(self.hitbox) or \
-        platform.rect.colliderect((self.hitbox.x - self.speed, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
-        self.actions['moving']['flag'] and self.facing == 'b' and not platform.rect.colliderect(self.hitbox):
+    def detect_horizontal_collision(self, platform: pygame.Rect, offset: int = 0):
+        # Se debería tomar self.speed o self.speed_roll dependiendo de cual sea el más alto
+        if platform.colliderect((self.hitbox.x + self.speed + offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
+         self.facing == 'f' and not platform.colliderect(self.hitbox) or \
+        platform.colliderect((self.hitbox.x - self.speed - offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
+         self.facing == 'b' and not platform.colliderect(self.hitbox):
             return True
         else:
             return False
         
-    def detect_top_platform_collision(self, platform: Platform):
-        if platform.rect.colliderect((self.hitbox.x, self.hitbox.y + self.speed_v, self.hitbox.width, self.hitbox.height)) and \
+    def detect_top_platform_collision(self, platform: pygame.Rect):
+        if platform.colliderect((self.hitbox.x, self.hitbox.y + self.speed_v, self.hitbox.width, self.hitbox.height)) and \
         not self.actions['jumping']['flag']:
             return True
         else:
             return False
         
-    def detect_bottom_platform_collision(self, platform: Platform):
-        if platform.rect.colliderect((self.hitbox.x, self.hitbox.y - self.speed_v, self.hitbox.width, self.hitbox.height)) and \
+    def detect_bottom_platform_collision(self, platform: pygame.Rect):
+        if platform.colliderect((self.hitbox.x, self.hitbox.y - self.speed_v, self.hitbox.width, self.hitbox.height)) and \
         self.actions['jumping']['flag']:
             return True
         else:
