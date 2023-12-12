@@ -12,11 +12,14 @@ class Entity(pygame.sprite.Sprite):
                  spritesheet: SpriteSheet,
                  health: int = 1,
                  iframes: int = 500,
-                 hitbox_scale: tuple = (1, 1)) -> None:
+                 hitbox_scale: tuple = (1, 1),
+                 hitbox_offset: list = [0, 0]) -> None:
         
         super().__init__(groups)
         
         self.spritesheet = spritesheet
+
+        self.hitbox_offset = hitbox_offset
 
         self.animations_forwards = self.spritesheet.get_animations()
         self.animations_backwards = self.spritesheet.get_animations(flip=True)
@@ -25,9 +28,13 @@ class Entity(pygame.sprite.Sprite):
 
         self.selected_animation = "idle"
         self.facing = 'f'
-        self.rect: pygame.Rect = self.image.get_rect( center = position )
+        self.rect: pygame.Rect = self.image.get_rect(topleft = position)
 
-        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
+        self.hitbox = pygame.Rect(self.rect.x + hitbox_offset[0], self.rect.y + hitbox_offset[1], int(self.rect.width * hitbox_scale[0]), int(self.rect.height * hitbox_scale[1]))
+        self.rect_diff_x = abs(self.rect.x - self.hitbox.x)
+        self.rect_diff_y = abs(self.rect.bottom - self.hitbox.bottom)
+        self.hitbox_offset_x_forwards = hitbox_offset[0]
+        self.hitbox_offset_x_backwards = (self.rect.width - self.hitbox.width - hitbox_offset[0])
 
         self.__health = health
 
@@ -43,7 +50,10 @@ class Entity(pygame.sprite.Sprite):
         self.actions = {'hurt': {'flag': False, 'function': self.hurt_animation}}
 
     def update(self):
-        self.hitbox.midbottom = self.rect.midbottom
+        # Actualizar la posicion de la hitbox
+        self.hitbox_offset[0] = self.hitbox_offset_x_forwards if self.facing == "f" else self.hitbox_offset_x_backwards
+        self.hitbox.x = self.rect.x + self.hitbox_offset[0]
+        self.hitbox.y = self.rect.y + self.hitbox_offset[1]
 
     def hurt(self, damage:int):
         if self.__vulnerable and not self.__intangible:
@@ -106,8 +116,9 @@ class Character(Entity):
                  jump_power: int = 5,
                  iframes: int = 500,
                  gravity: float = 0.2,
-                 hitbox_scale: tuple = (1, 1)) -> None:
-        super().__init__(position, groups, spritesheet, health, iframes, hitbox_scale)
+                 hitbox_scale: tuple = (1, 1),
+                 hitbox_offset: tuple = (0, 0)) -> None:
+        super().__init__(position, groups, spritesheet, health, iframes, hitbox_scale, hitbox_offset)
 
         self.speed = speed
         self.speed_v = 0
@@ -133,12 +144,9 @@ class Character(Entity):
         if self.speed_v >= self.terminal_velocity:
             self.speed_v = self.terminal_velocity
 
-        # if self.hitbox.bottom > SCREEN_HEIGHT:
-        #     self.rect.bottom = SCREEN_HEIGHT
-
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
-        
+
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
 
 
@@ -167,14 +175,37 @@ class Character(Entity):
         self.actions['moving']['flag'] = True
 
         # Caida
-        if self.hitbox.bottom < SCREEN_HEIGHT and not self.actions['jumping']['flag']:
-            self.actions['falling']['flag'] = True
-        else:
-            self.actions['falling']['flag'] = False
+        # if self.hitbox.bottom < SCREEN_HEIGHT and not self.actions['jumping']['flag']:
+        #     self.actions['falling']['flag'] = True
+        # else:
+        #     self.actions['falling']['flag'] = False
 
         for action in self.actions.values():
             if action['flag']:
                 action['function']()
+
+        # Colisiones con las plataformas
+        for platform in platforms_list:
+            if self.detect_horizontal_collision(platform.rect, 5):
+                self.actions['moving']['flag'] = False
+                self.facing = "b" if self.facing == "f" else "f"
+            if self.detect_top_platform_collision(platform.rect):
+                self.rect.bottom = platform.rect.top + self.rect_diff_y - 0
+                self.actions['falling']['flag'] = False
+                self.speed_v = 0
+                print(self.speed)
+            elif self.detect_bottom_platform_collision(platform.rect):
+                self.speed_v = 0
+                self.actions['jumping']['flag'] = False
+                self.actions['falling']['flag'] = True
+
+        for platform in platforms_list:
+            if not self.actions['jumping']['flag']:
+                self.actions['falling']['flag'] = True
+            # Si no hay nada abajo del pj, se cae
+            if platform.rect.colliderect((self.hitbox.x , self.hitbox.y + 1, self.hitbox.width, self.hitbox.height)):
+                self.actions['falling']['flag'] = False
+                break        
 
     def move(self):
         self.selected_animation = "run"
@@ -196,6 +227,30 @@ class Character(Entity):
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
 
+    def detect_horizontal_collision(self, platform: pygame.Rect, offset: int = 0):
+        # Se debería tomar self.speed o self.speed_roll dependiendo de cual sea el más alto
+        if platform.colliderect((self.hitbox.x + self.speed + offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
+         self.facing == 'f' and not platform.colliderect(self.hitbox) or \
+        platform.colliderect((self.hitbox.x - self.speed - offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
+         self.facing == 'b' and not platform.colliderect(self.hitbox):
+            return True
+        else:
+            return False
+        
+    def detect_top_platform_collision(self, platform: pygame.Rect, offset: int = 0):
+        if platform.colliderect((self.hitbox.x, self.hitbox.y + self.speed_v + offset, self.hitbox.width, self.hitbox.height)) and \
+        not self.actions['jumping']['flag']:
+            return True
+        else:
+            return False
+        
+    def detect_bottom_platform_collision(self, platform: pygame.Rect, offset: int = 0):
+        if platform.colliderect((self.hitbox.x, self.hitbox.y - self.speed_v - offset, self.hitbox.width, self.hitbox.height)) and \
+        self.actions['jumping']['flag']:
+            return True
+        else:
+            return False
+
 
 class NightBorne(Character):
     def __init__(self, 
@@ -208,18 +263,18 @@ class NightBorne(Character):
                  jump_power: int = 5, 
                  iframes: int = 500, 
                  gravity: float = 0.2, 
-                 hitbox_scale: tuple = (1, 1)) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
+                 hitbox_scale: tuple = (1, 1),
+                 hitbox_offset: tuple = (0, 0)) -> None:
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
-        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
-        self.fix_coefficient = 0.15
 
     def update(self):
-        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.height * self.fix_coefficient)
-        self.hitbox.midbottom = (self.rect.midbottom[0], self.rect.midbottom[1] - self.rect.height * self.fix_coefficient)
-        
+        super().update()
         if not self.any_action():
             self.selected_animation = "idle"
+
+        # self.actions['falling']['flag'] = False
+        # self.actions['moving']['flag'] = False
 
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
@@ -245,7 +300,6 @@ class EvilWizard(Character):
                  hitbox_scale: tuple = (1, 1)) -> None:
         super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
 
-        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
         self.fix_coefficient = 0.3
 
     def update(self):
@@ -278,7 +332,6 @@ class BringerOfDeath(Character):
                  hitbox_scale: tuple = (1, 1)) -> None:
         super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
 
-        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
         self.fix_coefficient = 0.225
 
     def update(self):
@@ -314,7 +367,6 @@ class ShurikenDude(Character):
                  hitbox_scale: tuple = (1, 1)) -> None:
         super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
         
-        self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
         self.fix_coefficient = 0.225
 
     def fall(self):
@@ -341,9 +393,10 @@ class Player(Character):
                  cd_roll: int = 1500,
                  speed_roll: int = 7,
                  gravity: float = 0.2,
-                 hitbox_scale: tuple = (1, 1)
+                 hitbox_scale: tuple = (1, 1),
+                 hitbox_offset: tuple = (0, 0)
                 ) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
+        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
         self.speed_roll = speed_roll
         self.cd_roll = cd_roll
@@ -519,27 +572,3 @@ class Player(Character):
         if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
             self.actions['rolling']['flag'] = False
             self.intangible = False
-
-    def detect_horizontal_collision(self, platform: pygame.Rect, offset: int = 0):
-        # Se debería tomar self.speed o self.speed_roll dependiendo de cual sea el más alto
-        if platform.colliderect((self.hitbox.x + self.speed + offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
-         self.facing == 'f' and not platform.colliderect(self.hitbox) or \
-        platform.colliderect((self.hitbox.x - self.speed - offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
-         self.facing == 'b' and not platform.colliderect(self.hitbox):
-            return True
-        else:
-            return False
-        
-    def detect_top_platform_collision(self, platform: pygame.Rect):
-        if platform.colliderect((self.hitbox.x, self.hitbox.y + self.speed_v, self.hitbox.width, self.hitbox.height)) and \
-        not self.actions['jumping']['flag']:
-            return True
-        else:
-            return False
-        
-    def detect_bottom_platform_collision(self, platform: pygame.Rect):
-        if platform.colliderect((self.hitbox.x, self.hitbox.y - self.speed_v, self.hitbox.width, self.hitbox.height)) and \
-        self.actions['jumping']['flag']:
-            return True
-        else:
-            return False
