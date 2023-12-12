@@ -24,6 +24,9 @@ class Game:
         self.sprites_data_path = os.path.join(os.getcwd(), "data", "sprites.json")
         sprites_data = read_json(self.sprites_data_path)
 
+        self.entities_data_path = os.path.join(os.getcwd(), "data", "entities_attributes.json")
+        entities_data = read_json(self.entities_data_path)
+
         self.tile_sets_data_path = os.path.join(os.getcwd(), "data", "tile_sets.json")
         tile_sets_data = read_json(self.tile_sets_data_path)
 
@@ -57,8 +60,8 @@ class Game:
         
         shuriken_dude_img = pygame.image.load(sprites_data["shuriken_dude"]["path"]).convert_alpha()
         shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 0.8)
-
-        self.player = Player((200, 400), (self.all_sprites, self.entities), player_spritesheet, health=1000, speed=3, physical_power=40, magic_power=40, jump_power=6, iframes=1000, speed_roll=2, gravity=0.2, hitbox_scale=(0.3, 0.78))
+        
+        self.player = Player((self.all_sprites, self.entities), player_spritesheet, *entities_data["player"].values())
         # self.nightborne = NightBorne((380, 100), (self.all_sprites, self.enemies, self.entities), nightborne_spritesheet, 1500, 1, hitbox_scale=(0.5, 0.45))
         # self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.35), gravity=0.1)
         # self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies, self.entities), bringer_of_death_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.6), gravity=0.1)
@@ -66,7 +69,8 @@ class Game:
 
         self.keydown_keys = []
 
-
+        for key, value in entities_data["player"].items():
+            print(key, value)
         
     def run(self):
         running = True
@@ -88,7 +92,6 @@ class Game:
                     if self.player.rect.collidepoint(pygame.mouse.get_pos()):
                         self.player.hurt(100)
 
-            # print(self.keydown_keys)
             self.draw()
             self.update()
             

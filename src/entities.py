@@ -264,7 +264,6 @@ class EvilWizard(Character):
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
 
-
 class BringerOfDeath(Character):
     def __init__(self, 
                  position: tuple[int, int], 
@@ -302,7 +301,17 @@ class BringerOfDeath(Character):
         self.speed_v += self.gravity
 
 class ShurikenDude(Character):
-    def __init__(self, position: tuple[int, int], groups, spritesheet: SpriteSheet, health: int = 200, speed: int = 5, physical_power: int = 40, jump_power: int = 5, iframes: int = 500, gravity: float = 0.2, hitbox_scale: tuple = (1, 1)) -> None:
+    def __init__(self, 
+                 position: tuple[int, int], 
+                 groups, 
+                 spritesheet: SpriteSheet, 
+                 health: int = 200, 
+                 speed: int = 5, 
+                 physical_power: int = 40, 
+                 jump_power: int = 5, 
+                 iframes: int = 500, 
+                 gravity: float = 0.2, 
+                 hitbox_scale: tuple = (1, 1)) -> None:
         super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
         
         self.hitbox = pygame.Rect(*self.rect.topleft, self.rect.width * hitbox_scale[0], self.rect.height * hitbox_scale[1])
@@ -319,9 +328,9 @@ class ShurikenDude(Character):
 
 class Player(Character):
     def __init__(self,
-                 position: tuple[int, int],
                  groups,
                  spritesheet: SpriteSheet,
+                 position: tuple[int, int],
                  health: int = 200, 
                  speed: int = 5, 
                  physical_power: int = 40,
@@ -450,8 +459,6 @@ class Player(Character):
             if platform.rect.colliderect((self.hitbox.x , self.hitbox.y + 1, self.hitbox.width, self.hitbox.height)):
                 self.actions['falling']['flag'] = False
                 break
-
-        print(self.actions['falling']['flag'], self.actions['wall_sliding']['flag'])
 
         # Ejecutar acciones
         for action in self.actions.values():
