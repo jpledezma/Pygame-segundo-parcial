@@ -48,14 +48,14 @@
         "hitbox_offset": [0, 0]
     },
     "bringer_of_death": {
-        "position": [10, 10], 
-        "health":  2000, 
-        "speed":  3, 
-        "physical_power":  120, 
+        "position": [[530, 150]], 
+        "health":  1500, 
+        "speed":  1, 
+        "physical_power":  150, 
         "jump_power":  5, 
-        "iframes":  1000, 
+        "iframes":  9000, 
         "gravity":  0.3, 
-        "hitbox_scale": [0.3, 0.6],
-        "hitbox_offset": [0, 0]
+        "hitbox_scale": [0.25, 0.6],
+        "hitbox_offset": [35, 75]
     }
 }
