@@ -33,51 +33,51 @@ class Game:
 
         # OAK WOODS
         #------------------------------------------------------------------------------------------------------
-        oak_woods_tileset_img = pygame.image.load(tile_sets_data["oak_woods"]["path_img"])
-        oak_woods_tileset = Tileset(oak_woods_tileset_img, tile_sets_data["oak_woods"]["tile_width"], tile_sets_data["oak_woods"]["tile_height"])
+        # oak_woods_tileset_img = pygame.image.load(tile_sets_data["oak_woods"]["path_img"])
+        # oak_woods_tileset = Tileset(oak_woods_tileset_img, tile_sets_data["oak_woods"]["tile_width"], tile_sets_data["oak_woods"]["tile_height"])
 
-        self.oak_woods_background_layers = []
-        for background_path in tile_sets_data["oak_woods"]["background_layers"]:
-            background_layer = pygame.image.load(background_path)
-            background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
-            background_layer = background_layer.convert_alpha()
-            self.oak_woods_background_layers.append(background_layer)
+        # self.oak_woods_background_layers = []
+        # for background_path in tile_sets_data["oak_woods"]["background_layers"]:
+        #     background_layer = pygame.image.load(background_path)
+        #     background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        #     background_layer = background_layer.convert_alpha()
+        #     self.oak_woods_background_layers.append(background_layer)
 
-        oak_woods_tile_map = read_tile_map(tile_sets_data["oak_woods"]["path_map"])
-        self.oak_woods_surfaces_list = oak_woods_tileset.get_map(oak_woods_tile_map)
+        # oak_woods_tile_map = read_tile_map(tile_sets_data["oak_woods"]["path_map"])
+        # self.oak_woods_surfaces_list = oak_woods_tileset.get_map(oak_woods_tile_map)
 
-        self.background_layers = self.oak_woods_background_layers
+        # self.background_layers = self.oak_woods_background_layers
         #------------------------------------------------------------------------------------------------------
 
         
         # GOTHICVANIA CHURCH
         #------------------------------------------------------------------------------------------------------
-        # gothicvania_church_tileset_img = pygame.image.load(tile_sets_data["gothicvania_church"]["path_img"])
-        # gothicvania_church_tileset = Tileset(gothicvania_church_tileset_img, tile_sets_data["gothicvania_church"]["tile_width"], tile_sets_data["gothicvania_church"]["tile_height"])
+        gothicvania_church_tileset_img = pygame.image.load(tile_sets_data["gothicvania_church"]["path_img"])
+        gothicvania_church_tileset = Tileset(gothicvania_church_tileset_img, tile_sets_data["gothicvania_church"]["tile_width"], tile_sets_data["gothicvania_church"]["tile_height"])
 
-        # self.gothicvania_church_background_layers = []
-        # for background_path in tile_sets_data["gothicvania_church"]["background_layers"]:
-        #     background_layer = pygame.image.load(background_path)
-        #     background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
-        #     background_layer = background_layer.convert_alpha()
-        #     self.gothicvania_church_background_layers.append(background_layer)
-        # gothicvania_church_tile_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_map"])
-        # self.gothicvania_church_surfaces_list = gothicvania_church_tileset.get_map(gothicvania_church_tile_map)
+        self.gothicvania_church_background_layers = []
+        for background_path in tile_sets_data["gothicvania_church"]["background_layers"]:
+            background_layer = pygame.image.load(background_path)
+            background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
+            background_layer = background_layer.convert_alpha()
+            self.gothicvania_church_background_layers.append(background_layer)
+        gothicvania_church_tile_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_map"])
+        self.gothicvania_church_surfaces_list = gothicvania_church_tileset.get_map(gothicvania_church_tile_map)
 
-        # gothicvania_church_decoration_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_decoration"])
-        # self.gothicvania_church_decoration_list = gothicvania_church_tileset.get_map(gothicvania_church_decoration_map)
+        gothicvania_church_decoration_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_decoration"])
+        self.gothicvania_church_decoration_list = gothicvania_church_tileset.get_map(gothicvania_church_decoration_map)
 
-        # self.background_layers = self.gothicvania_church_background_layers
+        self.background_layers = self.gothicvania_church_background_layers
         #------------------------------------------------------------------------------------------------------
 
-        for item in self.oak_woods_surfaces_list:
-            Platform(item[0], item[1], (self.all_sprites, self.platforms))
-
-        # for item in self.gothicvania_church_surfaces_list:
+        # for item in self.oak_woods_surfaces_list:
         #     Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
-        # for item in self.gothicvania_church_decoration_list:
-        #     Platform(item[0], item[1], (self.all_sprites, self.scene_decorations))
+        for item in self.gothicvania_church_surfaces_list:
+            Platform(item[0], item[1], (self.all_sprites, self.platforms))
+
+        for item in self.gothicvania_church_decoration_list:
+            Platform(item[0], item[1], (self.all_sprites, self.scene_decorations))
 
         
         
@@ -97,16 +97,20 @@ class Game:
         shuriken_dude_img = pygame.image.load(sprites_data["shuriken_dude"]["path"]).convert_alpha()
         shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, sprites_data["shuriken_dude"]["rows"], sprites_data["shuriken_dude"]["cols"], sprites_data["shuriken_dude"]["width"], sprites_data["shuriken_dude"]["height"], sprites_data["shuriken_dude"]["anim_keys"], sprites_data["shuriken_dude"]["anim_frames"], 0.8)
         
+        # Jugador
         self.player = Player((self.all_sprites, self.entities), player_spritesheet, *entities_data["player"].values())
-        self.nightborne = NightBorne((800, 400), (self.all_sprites, self.enemies, self.entities), nightborne_spritesheet, 1500, 1, hitbox_scale=(0.5, 0.45), hitbox_offset=[22, 37])
+        
+        
         # self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.35), gravity=0.1)
         # self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies, self.entities), bringer_of_death_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.6), gravity=0.1)
         # self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies, self.entities), shuriken_dude_spritesheet, 1500, 1, hitbox_scale=(0.45, 0.85), gravity=0.1)
-
+        
+        # Nightbornes
+        nightbornes_data = list(entities_data["nightborne"].values())
+        for i in range(len(nightbornes_data[0])):
+            NightBorne((self.all_sprites, self.entities, self.enemies), nightborne_spritesheet, nightbornes_data[0][i], *nightbornes_data[1:])
+            print(nightbornes_data[0])
         self.keydown_keys = []
-
-        for key, value in entities_data["player"].items():
-            print(key, value)
         
     def run(self):
         running = True
@@ -141,17 +145,19 @@ class Game:
         self.all_sprites.draw(self.screen)
         
         for entity in self.entities:
-            entity.draw_rect(self.screen, (250,250,250)) 
+            # entity.draw_rect(self.screen, (250,250,250)) 
+            if isinstance(entity, NightBorne):
+                pygame.draw.rect(self.screen, (250, 20, 20), entity.attack_hitbox, 2)
             entity.time_iframes(pygame.time.get_ticks())
 
-        for platform in self.platforms:
-            platform.draw_rect(self.screen, (250,0,0)) 
+        # for platform in self.platforms:
+            # platform.draw_rect(self.screen, (250,0,0)) 
 
     def update(self):
 
         self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
         for enemy in self.enemies:
-            enemy.detect_actions(self.platforms.sprites())
+            enemy.detect_actions(self.platforms.sprites(), self.player)
             if enemy.hitbox.colliderect(self.player.hitbox):
                 self.player.hurt(enemy.physical_power)
                 if self.player.actions['attacking']['flag']:

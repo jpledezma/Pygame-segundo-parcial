@@ -20,3 +20,6 @@ def read_json(path: str) -> dict:
         sprites_data = json.load(file)
 
     return sprites_data
+
+def get_distance(point1: int | float, point2: int | float) -> int | float:
+    return point1 - point2

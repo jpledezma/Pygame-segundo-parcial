@@ -4,12 +4,13 @@ from pygame.locals import *
 from config import *
 from spritesheet import SpriteSheet
 from platforms import Platform
+from utils import *
 
 class Entity(pygame.sprite.Sprite):
     def __init__(self,
-                 position: tuple[int, int],
                  groups,
                  spritesheet: SpriteSheet,
+                 position: tuple[int, int],
                  health: int = 1,
                  iframes: int = 500,
                  hitbox_scale: tuple = (1, 1),
@@ -107,9 +108,9 @@ class Entity(pygame.sprite.Sprite):
 
 class Character(Entity):
     def __init__(self, 
-                 position: tuple[int, int], 
                  groups, 
                  spritesheet: SpriteSheet, 
+                 position: tuple[int, int], 
                  health: int = 200, 
                  speed: int = 5,
                  physical_power: int = 40,
@@ -118,7 +119,7 @@ class Character(Entity):
                  gravity: float = 0.2,
                  hitbox_scale: tuple = (1, 1),
                  hitbox_offset: tuple = (0, 0)) -> None:
-        super().__init__(position, groups, spritesheet, health, iframes, hitbox_scale, hitbox_offset)
+        super().__init__(groups, spritesheet, position, health, iframes, hitbox_scale, hitbox_offset)
 
         self.speed = speed
         self.speed_v = 0
@@ -166,19 +167,7 @@ class Character(Entity):
                 break
         return flag
 
-    def detect_actions(self, platforms_list):
-        # Movimiento horizontal
-        if self.hitbox.right >= SCREEN_WIDTH:
-            self.facing = "b"
-        elif self.hitbox.left <= 0:
-            self.facing = "f"
-        self.actions['moving']['flag'] = True
-
-        # Caida
-        # if self.hitbox.bottom < SCREEN_HEIGHT and not self.actions['jumping']['flag']:
-        #     self.actions['falling']['flag'] = True
-        # else:
-        #     self.actions['falling']['flag'] = False
+    def detect_actions(self, platforms_list: list):
 
         for action in self.actions.values():
             if action['flag']:
@@ -193,7 +182,6 @@ class Character(Entity):
                 self.rect.bottom = platform.rect.top + self.rect_diff_y - 0
                 self.actions['falling']['flag'] = False
                 self.speed_v = 0
-                print(self.speed)
             elif self.detect_bottom_platform_collision(platform.rect):
                 self.speed_v = 0
                 self.actions['jumping']['flag'] = False
@@ -254,9 +242,9 @@ class Character(Entity):
 
 class NightBorne(Character):
     def __init__(self, 
-                 position: tuple[int, int], 
                  groups, 
                  spritesheet: SpriteSheet, 
+                 position: tuple[int, int], 
                  health: int = 200, 
                  speed: int = 5, 
                  physical_power: int = 40, 
@@ -265,7 +253,20 @@ class NightBorne(Character):
                  gravity: float = 0.2, 
                  hitbox_scale: tuple = (1, 1),
                  hitbox_offset: tuple = (0, 0)) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
+        super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
+
+        self.aggro_distance = 300
+        self.frame_span = 70
+        self.attack_range_x = self.hitbox.width
+        self.attack_range_y = self.hitbox.height + 20
+        self.attack_hitbox = pygame.Rect(0, 0, self.attack_range_x, self.attack_range_y)
+        self.actions = { 
+                         'moving': {'flag': False, 'function': self.move},
+                         'jumping': {'flag': False, 'function': self.jump},
+                         'falling': {'flag': True, 'function': self.fall},
+                         'attacking': {'flag': False, 'function': self.attack},
+                         'hurt': {'flag': False, 'function': self.hurt_animation}
+                       }
 
 
     def update(self):
@@ -273,18 +274,54 @@ class NightBorne(Character):
         if not self.any_action():
             self.selected_animation = "idle"
 
-        # self.actions['falling']['flag'] = False
-        # self.actions['moving']['flag'] = False
-
         if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
             self.speed_v = 0
         
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
 
+    def detect_actions(self, platforms_list, player: Character):
+        # Moverse hacia el jugador
+        distance_x = get_distance(self.hitbox.centerx, player.hitbox.centerx)
+        distance_y = get_distance(self.hitbox.centery, player.hitbox.centery)
+
+        if abs(distance_x) <= self.aggro_distance and abs(distance_y <= 95):
+            self.actions['moving']['flag'] = True
+            self.facing = "f" if distance_x <= 0 else "b"
+        else:
+            self.actions['moving']['flag'] = False
+
+        # Atacar
+        if abs(distance_x) <= self.attack_range_x + self.hitbox.width //2 - player.hitbox.width //2 \
+        and abs(distance_y <= 50):
+            self.actions['moving']['flag'] = False
+            self.actions['attacking']['flag'] = True
+            if self.current_sprite >= 8: # Este es el frame en el que baja la espada y ataca
+                self.attack_hitbox.width = self.attack_range_x
+                self.attack_hitbox.height = self.attack_range_y
+                self.attack_hitbox.midbottom = self.hitbox.midbottom
+                if self.facing == "f":
+                    self.attack_hitbox.left = self.hitbox.centerx
+                else:
+                    self.attack_hitbox.right = self.hitbox.centerx
+            else:
+                self.attack_hitbox.width = 0
+                self.attack_hitbox.height = 0
+        else:
+            self.actions['attacking']['flag'] = False
+            self.attack_hitbox.width = 0
+            self.attack_hitbox.height = 0
+
+        super().detect_actions(platforms_list)
+
     def fall(self):
         self.selected_animation = 'run'
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
+    
+    def attack(self):
+        self.selected_animation = "attack"
+        if self.current_sprite >= 8:
+            print("ATAQUE")
 
 class EvilWizard(Character):
     def __init__(self, 
@@ -396,7 +433,7 @@ class Player(Character):
                  hitbox_scale: tuple = (1, 1),
                  hitbox_offset: tuple = (0, 0)
                 ) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
+        super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
         self.speed_roll = speed_roll
         self.cd_roll = cd_roll

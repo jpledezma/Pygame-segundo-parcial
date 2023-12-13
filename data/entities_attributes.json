@@ -15,7 +15,7 @@
         "hitbox_offset": [35, 13]
     },
     "nightborne": {
-        "position": [[100, 100], [200, 200]] ,
+        "position": [[800, 400], [600, 400]],
         "health":  300, 
         "speed": 2, 
         "physical_power": 40, 
@@ -23,7 +23,7 @@
         "iframes": 700, 
         "gravity": 0.2, 
         "hitbox_scale":  [0.5, 0.45],
-        "hitbox_offset": [0, 0]
+        "hitbox_offset": [22, 37]
     },
     "evil_wizard": {
         "position": [10, 10], 
