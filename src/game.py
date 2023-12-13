@@ -147,6 +147,9 @@ class Game:
             BringerOfDeath((self.all_sprites, self.entities, self.enemies), bringer_of_death_spritesheet, bringer_of_death_data[0][i], *bringer_of_death_data[1:])
 
         self.keydown_keys = []
+
+        self.sp_rect = pygame.Rect(0, 0, 0, 0)
+        self.img_sp = pygame.image.load(r"assets\sprites\proyectiles\shuriken.png")
         
     def run(self):
         running = True
@@ -188,6 +191,8 @@ class Game:
 
         # for platform in self.platforms:
             # platform.draw_rect(self.screen, (250,0,0)) 
+        if self.sp_rect.width > 0:
+            self.screen.blit(self.img_sp, self.sp_rect)
 
     def update(self):
 
@@ -201,6 +206,16 @@ class Game:
             if enemy.health <= 0:
                 enemy.kill()
             pygame.draw.rect(self.screen, (255, 0, 0), enemy.attack_hitbox, 1)
+            pygame.draw.rect(self.screen, (0, 250, 250), enemy.sp_attack_hitbox, 1)
+
+            if isinstance(enemy, BringerOfDeath) :
+                if enemy.actions['sp_attacking']['flag']:
+                    print("aaaaa")
+                    self.sp_rect = pygame.Rect(enemy.sp_attack_hitbox.left, enemy.sp_attack_hitbox.top, 100, 100)
+                else:
+                    self.sp_rect = pygame.Rect(0, 0, 0, 0)
+
+                
 
         self.all_sprites.update()
 

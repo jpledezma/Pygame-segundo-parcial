@@ -53,9 +53,18 @@
         "speed":  1, 
         "physical_power":  150, 
         "jump_power":  5, 
-        "iframes":  9000, 
+        "iframes":  700, 
         "gravity":  0.3, 
         "hitbox_scale": [0.25, 0.6],
         "hitbox_offset": [35, 75]
+    },
+    "shuriken": {
+        "position": [[0, 0]], 
+        "health":  1, 
+        "speed":  1, 
+        "physical_power": 40, 
+        "iframes":  700, 
+        "hitbox_scale": [1, 1],
+        "hitbox_offset": [0, 0]
     }
 }

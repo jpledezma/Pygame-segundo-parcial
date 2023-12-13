@@ -67,7 +67,7 @@ class Entity(pygame.sprite.Sprite):
 
     def hurt_animation(self):
         self.selected_animation = "hurt"
-        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+        if self.last_sprite():
             self.actions['hurt']['flag'] = False
 
 
@@ -86,6 +86,10 @@ class Entity(pygame.sprite.Sprite):
         pygame.draw.rect(surface, color, self.hitbox, 2)
         pygame.draw.rect(surface, color, self.rect, 2)
 
+    def last_sprite(self):
+        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+            return True
+        return False
 
     @property
     def health(self):
@@ -104,6 +108,19 @@ class Entity(pygame.sprite.Sprite):
     def intangible(self, value):
         if isinstance(value, bool):
             self.__intangible = value
+
+class Projectile(Entity):
+    def __init__(self, 
+                 groups, 
+                 spritesheet: SpriteSheet, 
+                 position: tuple[int, int], 
+                 health: int = 1,
+                 speed: int = 1,
+                 physical_power: int = 40,
+                 iframes: int = 500, 
+                 hitbox_scale: tuple = (1, 1), 
+                 hitbox_offset: list = [0, 0]) -> None:
+        super().__init__(groups, spritesheet, position, health, iframes, hitbox_scale, hitbox_offset)
 
 class Character(Entity):
     def __init__(self, 
@@ -413,20 +430,25 @@ class BringerOfDeath(Character):
         super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
         self.aggro_distance = 500
-        # self.frame_span = 70
         self.attack_range_x = self.hitbox.width + 130
         self.attack_range_y = self.hitbox.height + 30
         self.attack_hitbox = pygame.Rect(0, 0, self.attack_range_x, self.attack_range_y)
+        self.sp_attack_hitbox = pygame.Rect(0, 0, 0, 0)
+        self.sp_attack_aoe = (40, 70)
 
         self.flag_begin_attack = True
         self.flag_fix_hitbox = True
         self.previous_facing = self.facing
+
+        self.cd_sp_attack = 3000
+        self.sp_attack_moment = 0
 
         self.actions = { 
                          'moving': {'flag': False, 'function': self.move},
                          'jumping': {'flag': False, 'function': self.jump},
                          'falling': {'flag': True, 'function': self.fall},
                          'attacking': {'flag': False, 'function': self.attack},
+                         'sp_attacking': {'flag': False, 'function': self.special_attack},
                          'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
 
@@ -445,6 +467,11 @@ class BringerOfDeath(Character):
         # Moverse hacia el jugador
         distance_x = get_distance(self.hitbox.centerx, player.hitbox.centerx)
         distance_y = get_distance(self.hitbox.centery, player.hitbox.centery)
+
+        # Mover el sprite en caso de que cambie de direccion
+        if self.previous_facing != self.facing:
+            self.flag_fix_hitbox = True
+            self.previous_facing = self.facing
 
         if abs(distance_x) <= self.aggro_distance and abs(distance_y) <= 95:
             self.actions['moving']['flag'] = True
@@ -466,6 +493,33 @@ class BringerOfDeath(Character):
         and abs(distance_y) <= 50:
             self.actions['moving']['flag'] = False
             self.actions['attacking']['flag'] = True
+        else:
+            self.actions['attacking']['flag'] = False
+            self.attack_hitbox.width = 0
+            self.attack_hitbox.height = 0
+
+        # Ataque especial
+        if not self.any_action() \
+        and pygame.time.get_ticks() >= self.sp_attack_moment + self.cd_sp_attack:
+            self.sp_attack_moment = pygame.time.get_ticks()
+            self.actions['sp_attacking']['flag'] = True
+            self.current_sprite = 0
+            self.sp_attack_hitbox.centerx = player.hitbox.centerx - self.sp_attack_aoe[0] //2
+            self.sp_attack_hitbox.centery = player.hitbox.centery - self.sp_attack_aoe[1] //2
+
+        if self.actions['sp_attacking']['flag'] and self.current_sprite >= 5:
+            self.sp_attack_hitbox.width = self.sp_attack_aoe[0]
+            self.sp_attack_hitbox.height = self.sp_attack_aoe[1]
+        else:
+            self.sp_attack_hitbox.width = 0
+            self.sp_attack_hitbox.height = 0
+
+
+        super().detect_actions(platforms_list)
+
+    def attack(self):
+        self.selected_animation = "attack"
+        if self.actions['attacking']['flag']:
             if self.current_sprite >= 4 and self.current_sprite <= 7: # Estos son los frames en el que baja la espada y ataca
                 self.attack_hitbox.width = self.attack_range_x
                 self.attack_hitbox.height = self.attack_range_y
@@ -477,25 +531,11 @@ class BringerOfDeath(Character):
             else:
                 self.attack_hitbox.width = 0
                 self.attack_hitbox.height = 0
-        else:
-            self.actions['attacking']['flag'] = False
-            self.attack_hitbox.width = 0
-            self.attack_hitbox.height = 0
-
-        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
-            self.flag_begin_attack = True
-
-        if self.previous_facing != self.facing:
-            self.flag_fix_hitbox = True
-            self.previous_facing = self.facing
-
-        super().detect_actions(platforms_list)
-
-    def attack(self):
-        self.selected_animation = "attack"
-        # if self.flag_begin_attack:
-        #     self.current_sprite = 0
-        #     self.flag_begin_attack = False
+    
+    def special_attack(self):
+        self.selected_animation = "cast"
+        if self.last_sprite():
+            self.actions['sp_attacking']['flag'] = False
 
     def fall(self):
         self.selected_animation = 'run'
@@ -525,7 +565,6 @@ class ShurikenDude(Character):
 
     def move(self):
         self.selected_animation = 'idle'
-
 
 class Player(Character):
     def __init__(self,
@@ -677,13 +716,13 @@ class Player(Character):
 
     def attack(self):
         self.selected_animation = f"at{self.current_attack}"
-        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+        if self.last_sprite():
             self.actions['attacking']['flag'] = False
             self.current_attack = 1
 
     def block(self):
         self.selected_animation = "block_idle"
-        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+        if self.last_sprite():
             self.actions['parry']['flag'] = False
 
     def jump(self):
@@ -718,6 +757,6 @@ class Player(Character):
         self.selected_animation = "roll"
         if self.actions['rolling']['flag']:
             self.rect.move_ip(self.speed_roll, 0) if self.facing == 'f' else self.rect.move_ip(-self.speed_roll, 0)
-        if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
+        if self.last_sprite():
             self.actions['rolling']['flag'] = False
             self.intangible = False
