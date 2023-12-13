@@ -1,0 +1,52 @@
+{
+    "player": {
+        "path": "assets/sprites/jugador/HeroKnight.png",
+        "rows": 9,
+        "cols": 10,
+        "width": 100,
+        "height": 55,
+        "anim_keys": ["idle", "run", "at1", "at2", "at3", "jump", "fall", "hurt", "death", "block_idle", "block", "roll", "ledge_grab", "wall_slide"],
+        "anim_frames": [8, 10, 6, 6, 8, 3, 4, 3, 10, 8, 5, 9, 5, 5],
+        "scale": 1
+    },
+    "nightborne": {
+        "path": "assets/sprites/enemigos/NightBorne.png",
+        "rows": 6,
+        "cols": 10,
+        "width": 80,
+        "height": 80,
+        "anim_keys": ["idle", "run", "jump", "attack", "hurt", "death"],
+        "anim_frames": [9, 6, 5, 12, 5, 23],
+        "scale": 1.2
+    },
+    "evil_wizard": {
+        "path": "assets/sprites/enemigos/EvilWizard.png",
+        "rows": 6,
+        "cols": 6,
+        "width": 150,
+        "height": 150,
+        "anim_keys": ["idle", "run", "attack", "hurt", "death"],
+        "anim_frames": [8, 8, 10, 5, 5],
+        "scale": 1.2
+    },
+    "bringer_of_death": {
+        "path": "assets/sprites/enemigos/BringerOfDeath.png",
+        "rows": 6,
+        "cols": 8,
+        "width": 140,
+        "height": 93,
+        "anim_keys": ["idle", "run", "attack", "hurt", "death", "cast"],
+        "anim_frames": [8, 8, 10, 3, 10, 9],
+        "scale": 2
+    },
+    "shuriken_dude": {
+        "path": "assets/sprites/enemigos/ShurikenDude.png",
+        "rows": 1,
+        "cols": 13,
+        "width": 80,
+        "height": 64,
+        "anim_keys": ["idle", "attack", "hurt"],
+        "anim_frames": [1, 8, 4],
+        "scale": 1
+    }
+}

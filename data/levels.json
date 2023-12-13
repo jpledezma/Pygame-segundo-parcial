@@ -1,0 +1,20 @@
+{
+    "level_1": {
+        "path_map": "data/oak_woods_tiles_map.csv",
+        "player_position": [40, 400],
+        "enemies_positions": {
+            "nightbornes": [[800, 400], [600, 400]],
+            "evil_wizards": [[800, 100], [600, 100]],
+            "bringer_of_death": [100, 100]
+        }
+    },
+    "level_2": {
+        "path_map": "data/gothicvania_church_tiles_map.csv",
+        "path_decoration": "data/gothicvania_church_decoration_map.csv",
+        "player_position": [40, 400]
+    },
+    "level_3": {
+        "path_map": "data/pixel_fantasy_caves_map.csv",
+        "player_position": [40, 400]
+    }
+}

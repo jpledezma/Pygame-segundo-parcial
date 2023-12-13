@@ -1,11 +1,10 @@
 {
     "player": {
-        "position": [40, 400],
         "health": 1000,
         "speed": 3,
         "physical_power": 40,
         "magic_power": 55,
-        "jump_power": 6,
+        "jump_power": 5,
         "iframes": 1000,
         "cd_parry": 1500,
         "cd_roll": 1500,
@@ -15,7 +14,6 @@
         "hitbox_offset": [35, 13]
     },
     "nightborne": {
-        "position": [[800, 400], [600, 400]],
         "health":  300, 
         "speed": 2, 
         "physical_power": 40, 
@@ -26,7 +24,6 @@
         "hitbox_offset": [22, 37]
     },
     "evil_wizard": {
-        "position": [[730, 150], [530, 150]], 
         "health": 500, 
         "speed": 1, 
         "physical_power": 100, 
@@ -37,7 +34,6 @@
         "hitbox_offset": [65, 60]
     },
     "shuriken_dude": {
-        "position": [10, 10],
         "health":  150, 
         "speed":  1, 
         "physical_power":  75, 
@@ -48,7 +44,6 @@
         "hitbox_offset": [0, 0]
     },
     "bringer_of_death": {
-        "position": [[530, 150]], 
         "health":  1500, 
         "speed":  1, 
         "physical_power":  150, 
@@ -59,7 +54,6 @@
         "hitbox_offset": [35, 75]
     },
     "shuriken": {
-        "position": [[0, 0]], 
         "health":  1, 
         "speed":  1, 
         "physical_power": 40, 

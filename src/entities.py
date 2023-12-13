@@ -519,18 +519,17 @@ class BringerOfDeath(Character):
 
     def attack(self):
         self.selected_animation = "attack"
-        if self.actions['attacking']['flag']:
-            if self.current_sprite >= 4 and self.current_sprite <= 7: # Estos son los frames en el que baja la espada y ataca
-                self.attack_hitbox.width = self.attack_range_x
-                self.attack_hitbox.height = self.attack_range_y
-                self.attack_hitbox.midbottom = self.hitbox.midbottom
-                if self.facing == "f":
-                    self.attack_hitbox.left = self.hitbox.centerx
-                else:
-                    self.attack_hitbox.right = self.hitbox.centerx
+        if self.current_sprite >= 4 and self.current_sprite <= 7: # Estos son los frames en el que baja la espada y ataca
+            self.attack_hitbox.width = self.attack_range_x
+            self.attack_hitbox.height = self.attack_range_y
+            self.attack_hitbox.midbottom = self.hitbox.midbottom
+            if self.facing == "f":
+                self.attack_hitbox.left = self.hitbox.centerx
             else:
-                self.attack_hitbox.width = 0
-                self.attack_hitbox.height = 0
+                self.attack_hitbox.right = self.hitbox.centerx
+        else:
+            self.attack_hitbox.width = 0
+            self.attack_hitbox.height = 0
     
     def special_attack(self):
         self.selected_animation = "cast"
