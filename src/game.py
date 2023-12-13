@@ -82,7 +82,7 @@ class Game:
             background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
             background_layer = background_layer.convert_alpha()
             self.pixel_fantasy_caves_background_layers.append(background_layer)
-            
+
         pixel_fantasy_caves_tile_map = read_tile_map(tile_sets_data["pixel_fantasy_caves"]["path_map"])
         self.pixel_fantasy_caves_surfaces_list = pixel_fantasy_caves_tileset.get_map(pixel_fantasy_caves_tile_map)
 
@@ -123,15 +123,24 @@ class Game:
         self.player = Player((self.all_sprites, self.entities), player_spritesheet, *entities_data["player"].values())
         
         
-        # self.evil_wizard = EvilWizard((500, 400), (self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.35), gravity=0.1)
+        # self.evil_wizard = EvilWizard((self.all_sprites, self.enemies, self.entities), evil_wizard_spritesheet, (730, 150), 1500, 1, hitbox_scale=(0.25, 0.35), gravity=0.1, hitbox_offset=[65, 60])
         # self.bringer_of_death = BringerOfDeath((500, 400), (self.all_sprites, self.enemies, self.entities), bringer_of_death_spritesheet, 1500, 1, hitbox_scale=(0.3, 0.6), gravity=0.1)
         # self.shuriken_dude = ShurikenDude((600, 100), (self.all_sprites, self.enemies, self.entities), shuriken_dude_spritesheet, 1500, 1, hitbox_scale=(0.45, 0.85), gravity=0.1)
         
         # Nightbornes
-        nightbornes_data = list(entities_data["nightborne"].values())
-        for i in range(len(nightbornes_data[0])):
-            NightBorne((self.all_sprites, self.entities, self.enemies), nightborne_spritesheet, nightbornes_data[0][i], *nightbornes_data[1:])
-            print(nightbornes_data[0])
+
+        # nightbornes_data = list(entities_data["nightborne"].values())
+        # for i in range(len(nightbornes_data[0])):
+        #     NightBorne((self.all_sprites, self.entities, self.enemies), nightborne_spritesheet, nightbornes_data[0][i], *nightbornes_data[1:])
+        #     print(nightbornes_data[0])
+
+        # Evil Wizards
+        
+        evil_wizards_data = list(entities_data["evil_wizard"].values())
+        for i in range(len(evil_wizards_data[0])):
+            EvilWizard((self.all_sprites, self.entities, self.enemies), evil_wizard_spritesheet, evil_wizards_data[0][i], *evil_wizards_data[1:])
+            print(evil_wizards_data[0])
+
         self.keydown_keys = []
         
     def run(self):
@@ -167,7 +176,7 @@ class Game:
         self.all_sprites.draw(self.screen)
         
         for entity in self.entities:
-            # entity.draw_rect(self.screen, (250,250,250)) 
+            entity.draw_rect(self.screen, (250,250,250)) 
             if isinstance(entity, NightBorne):
                 pygame.draw.rect(self.screen, (250, 20, 20), entity.attack_hitbox, 2)
             entity.time_iframes(pygame.time.get_ticks())
@@ -186,6 +195,7 @@ class Game:
                     enemy.hurt(self.player.physical_power)
             if enemy.health <= 0:
                 enemy.kill()
+            pygame.draw.rect(self.screen, (255, 0, 0), enemy.attack_hitbox, 1)
 
         self.all_sprites.update()
 

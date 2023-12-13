@@ -26,15 +26,15 @@
         "hitbox_offset": [22, 37]
     },
     "evil_wizard": {
-        "position": [10, 10], 
+        "position": [[730, 150], [530, 150]], 
         "health": 500, 
-        "speed": 2, 
+        "speed": 1, 
         "physical_power": 100, 
         "jump_power": 5, 
         "iframes": 700, 
         "gravity": 0.1, 
-        "hitbox_scale": [0.3, 0.35],
-        "hitbox_offset": [0, 0]
+        "hitbox_scale": [0.25, 0.35],
+        "hitbox_offset": [65, 60]
     },
     "shuriken_dude": {
         "position": [10, 10],
