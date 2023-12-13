@@ -52,32 +52,54 @@ class Game:
         
         # GOTHICVANIA CHURCH
         #------------------------------------------------------------------------------------------------------
-        gothicvania_church_tileset_img = pygame.image.load(tile_sets_data["gothicvania_church"]["path_img"])
-        gothicvania_church_tileset = Tileset(gothicvania_church_tileset_img, tile_sets_data["gothicvania_church"]["tile_width"], tile_sets_data["gothicvania_church"]["tile_height"])
+        # gothicvania_church_tileset_img = pygame.image.load(tile_sets_data["gothicvania_church"]["path_img"])
+        # gothicvania_church_tileset = Tileset(gothicvania_church_tileset_img, tile_sets_data["gothicvania_church"]["tile_width"], tile_sets_data["gothicvania_church"]["tile_height"])
 
-        self.gothicvania_church_background_layers = []
-        for background_path in tile_sets_data["gothicvania_church"]["background_layers"]:
+        # self.gothicvania_church_background_layers = []
+        # for background_path in tile_sets_data["gothicvania_church"]["background_layers"]:
+        #     background_layer = pygame.image.load(background_path)
+        #     background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
+        #     background_layer = background_layer.convert_alpha()
+        #     self.gothicvania_church_background_layers.append(background_layer)
+        # gothicvania_church_tile_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_map"])
+        # self.gothicvania_church_surfaces_list = gothicvania_church_tileset.get_map(gothicvania_church_tile_map)
+
+        # gothicvania_church_decoration_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_decoration"])
+        # self.gothicvania_church_decoration_list = gothicvania_church_tileset.get_map(gothicvania_church_decoration_map)
+
+        # self.background_layers = self.gothicvania_church_background_layers
+        #------------------------------------------------------------------------------------------------------
+
+
+        # PIXEL FANTASY CAVES
+        #------------------------------------------------------------------------------------------------------
+        pixel_fantasy_caves_tileset_img = pygame.image.load(tile_sets_data["pixel_fantasy_caves"]["path_img"])
+        pixel_fantasy_caves_tileset = Tileset(pixel_fantasy_caves_tileset_img, tile_sets_data["pixel_fantasy_caves"]["tile_width"], tile_sets_data["pixel_fantasy_caves"]["tile_height"])
+
+        self.pixel_fantasy_caves_background_layers = []
+        for background_path in tile_sets_data["pixel_fantasy_caves"]["background_layers"]:
             background_layer = pygame.image.load(background_path)
             background_layer = pygame.transform.scale(background_layer, (SCREEN_WIDTH, SCREEN_HEIGHT))
             background_layer = background_layer.convert_alpha()
-            self.gothicvania_church_background_layers.append(background_layer)
-        gothicvania_church_tile_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_map"])
-        self.gothicvania_church_surfaces_list = gothicvania_church_tileset.get_map(gothicvania_church_tile_map)
+            self.pixel_fantasy_caves_background_layers.append(background_layer)
+            
+        pixel_fantasy_caves_tile_map = read_tile_map(tile_sets_data["pixel_fantasy_caves"]["path_map"])
+        self.pixel_fantasy_caves_surfaces_list = pixel_fantasy_caves_tileset.get_map(pixel_fantasy_caves_tile_map)
 
-        gothicvania_church_decoration_map = read_tile_map(tile_sets_data["gothicvania_church"]["path_decoration"])
-        self.gothicvania_church_decoration_list = gothicvania_church_tileset.get_map(gothicvania_church_decoration_map)
-
-        self.background_layers = self.gothicvania_church_background_layers
+        self.background_layers = self.pixel_fantasy_caves_background_layers
         #------------------------------------------------------------------------------------------------------
 
         # for item in self.oak_woods_surfaces_list:
         #     Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
-        for item in self.gothicvania_church_surfaces_list:
-            Platform(item[0], item[1], (self.all_sprites, self.platforms))
+        # for item in self.gothicvania_church_surfaces_list:
+        #     Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
-        for item in self.gothicvania_church_decoration_list:
-            Platform(item[0], item[1], (self.all_sprites, self.scene_decorations))
+        # for item in self.gothicvania_church_decoration_list:
+        #     Platform(item[0], item[1], (self.all_sprites, self.scene_decorations))
+
+        for item in self.pixel_fantasy_caves_surfaces_list:
+            Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
         
         
@@ -161,7 +183,7 @@ class Game:
             if enemy.hitbox.colliderect(self.player.hitbox):
                 self.player.hurt(enemy.physical_power)
                 if self.player.actions['attacking']['flag']:
-                    enemy.hurt(500)
+                    enemy.hurt(self.player.physical_power)
             if enemy.health <= 0:
                 enemy.kill()
 
