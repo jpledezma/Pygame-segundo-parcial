@@ -169,15 +169,10 @@ class Character(Entity):
 
     def detect_actions(self, platforms_list: list):
 
-        for action in self.actions.values():
-            if action['flag']:
-                action['function']()
-
         # Colisiones con las plataformas
         for platform in platforms_list:
             if self.detect_horizontal_collision(platform.rect, 5):
                 self.actions['moving']['flag'] = False
-                self.facing = "b" if self.facing == "f" else "f"
             if self.detect_top_platform_collision(platform.rect):
                 self.rect.bottom = platform.rect.top + self.rect_diff_y - 0
                 self.actions['falling']['flag'] = False
@@ -193,7 +188,11 @@ class Character(Entity):
             # Si no hay nada abajo del pj, se cae
             if platform.rect.colliderect((self.hitbox.x , self.hitbox.y + 1, self.hitbox.width, self.hitbox.height)):
                 self.actions['falling']['flag'] = False
-                break        
+                break
+
+        for action in self.actions.values():
+            if action['flag']:
+                action['function']()
 
     def move(self):
         self.selected_animation = "run"
@@ -321,7 +320,8 @@ class NightBorne(Character):
     def attack(self):
         self.selected_animation = "attack"
         if self.current_sprite >= 8:
-            print("ATAQUE")
+            # print("ATAQUE")
+            pass
 
 class EvilWizard(Character):
     def __init__(self, 
