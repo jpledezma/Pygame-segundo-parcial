@@ -25,9 +25,8 @@ class Game():
         self.maps_data_path = os.path.join(os.getcwd(), "data", "levels.json")
         self.maps_data = read_json(self.maps_data_path)
 
-        level_1 = Level(self.screen, sprites_data, tile_sets_data["oak_woods"], entities_data, self.maps_data["level_1"])
+        level_1 = Level(self.screen, sprites_data, tile_sets_data[self.maps_data["level_1"]["tileset"]], entities_data, self.maps_data["level_1"])
 
-        print(self.maps_data["level_1"])
         level_1.run()
 
         

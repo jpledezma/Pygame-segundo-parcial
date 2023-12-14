@@ -16,8 +16,9 @@
     "nightborne": {
         "health":  300, 
         "speed": 2, 
-        "physical_power": 40, 
+        "physical_power": 80, 
         "jump_power": 5, 
+        "aggro_distance": 200,
         "iframes": 700, 
         "gravity": 0.2, 
         "hitbox_scale":  [0.5, 0.45],
@@ -26,8 +27,9 @@
     "evil_wizard": {
         "health": 500, 
         "speed": 1, 
-        "physical_power": 100, 
+        "physical_power": 50, 
         "jump_power": 5, 
+        "aggro_distance": 200,
         "iframes": 700, 
         "gravity": 0.1, 
         "hitbox_scale": [0.25, 0.35],
@@ -38,16 +40,18 @@
         "speed":  1, 
         "physical_power":  75, 
         "jump_power":  1, 
+        "aggro_distance": 500,
         "iframes":  700, 
         "gravity": 0.2, 
         "hitbox_scale": [0.45, 0.85],
-        "hitbox_offset": [0, 0]
+        "hitbox_offset": [22, 10]
     },
     "bringer_of_death": {
         "health":  1500, 
         "speed":  1, 
         "physical_power":  150, 
         "jump_power":  5, 
+        "aggro_distance": 500,
         "iframes":  700, 
         "gravity":  0.3, 
         "hitbox_scale": [0.25, 0.6],

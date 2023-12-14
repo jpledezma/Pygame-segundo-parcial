@@ -72,6 +72,12 @@ class Level():
                 evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, *list(self.spritesheets_data["evil_wizard"].values())[1:])
                 for position in positions:
                     EvilWizard((self.all_sprites, self.entities, self.enemies), evil_wizard_spritesheet, position, *self.entities_data["evil_wizard"].values())
+
+            if enemies == "shuriken_dudes":
+                shuriken_dude_img = pygame.image.load(self.spritesheets_data["shuriken_dude"]["path"]).convert_alpha()
+                shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, *list(self.spritesheets_data["shuriken_dude"].values())[1:])
+                for position in positions:
+                    ShurikenDude((self.all_sprites, self.entities, self.enemies), shuriken_dude_spritesheet, position, *self.entities_data["shuriken_dude"].values())
            
             if enemies == "bringer_of_death":
                 bringer_of_death_img = pygame.image.load(self.spritesheets_data["bringer_of_death"]["path"]).convert_alpha()
@@ -116,6 +122,9 @@ class Level():
             self.screen.blit(background, (0, 0))
 
         self.all_sprites.draw(self.screen)
+
+        for entity in self.entities:
+            entity.draw_rect(self.screen, (88, 182, 192))
 
         # for platform in self.platforms:
             # platform.draw_rect(self.screen, (250,0,0)) 
