@@ -263,13 +263,14 @@ class NightBorne(Character):
                  speed: int = 5, 
                  physical_power: int = 40, 
                  jump_power: int = 5, 
+                 aggro_distance: int = 100,
                  iframes: int = 500, 
                  gravity: float = 0.2, 
                  hitbox_scale: tuple = (1, 1),
                  hitbox_offset: tuple = (0, 0)) -> None:
         super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
-        self.aggro_distance = 300
+        self.aggro_distance = aggro_distance
         self.frame_span = 70
         self.attack_range_x = self.hitbox.width
         self.attack_range_y = self.hitbox.height + 20
@@ -282,7 +283,6 @@ class NightBorne(Character):
                          'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
 
-
     def update(self):
         super().update()
         if not self.any_action():
@@ -294,10 +294,11 @@ class NightBorne(Character):
         self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
 
     def detect_actions(self, platforms_list, player: Character):
-        # Moverse hacia el jugador
+        # Distancia hacia el jugador
         distance_x = get_distance(self.hitbox.centerx, player.hitbox.centerx)
         distance_y = get_distance(self.hitbox.centery, player.hitbox.centery)
 
+        # Moverse hacia el jugador
         if abs(distance_x) <= self.aggro_distance and abs(distance_y) <= 95:
             self.actions['moving']['flag'] = True
             self.facing = "f" if distance_x <= 0 else "b"
@@ -305,7 +306,7 @@ class NightBorne(Character):
             self.actions['moving']['flag'] = False
 
         # Atacar
-        if abs(distance_x) <= self.attack_range_x + self.hitbox.width //2 - player.hitbox.width //2 \
+        if abs(distance_x) <= self.attack_range_x + self.hitbox.width //2 - player.hitbox.width \
         and abs(distance_y) <= 50:
             self.actions['moving']['flag'] = False
             self.actions['attacking']['flag'] = True
@@ -344,13 +345,14 @@ class EvilWizard(Character):
                  speed: int = 5, 
                  physical_power: int = 40, 
                  jump_power: int = 5, 
+                 aggro_distance: int = 100,
                  iframes: int = 500, 
                  gravity: float = 0.2, 
                  hitbox_scale: tuple = (1, 1),
                  hitbox_offset: tuple = (0, 0)) -> None:
         super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
-        self.aggro_distance = 300
+        self.aggro_distance = aggro_distance
         # self.frame_span = 70
         self.attack_range_x = self.hitbox.width + 30
         self.attack_range_y = self.hitbox.height - 10
@@ -423,13 +425,14 @@ class BringerOfDeath(Character):
                  speed: int = 5, 
                  physical_power: int = 40, 
                  jump_power: int = 5, 
+                 aggro_distance: int = 100,
                  iframes: int = 500, 
                  gravity: float = 0.2, 
                  hitbox_scale: tuple = (1, 1),
                  hitbox_offset: tuple = (0, 0)) -> None:
         super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
-        self.aggro_distance = 500
+        self.aggro_distance = aggro_distance
         self.attack_range_x = self.hitbox.width + 130
         self.attack_range_y = self.hitbox.height + 30
         self.attack_hitbox = pygame.Rect(0, 0, self.attack_range_x, self.attack_range_y)
@@ -543,24 +546,51 @@ class BringerOfDeath(Character):
 
 class ShurikenDude(Character):
     def __init__(self, 
-                 position: tuple[int, int], 
                  groups, 
                  spritesheet: SpriteSheet, 
+                 position: tuple[int, int], 
                  health: int = 200, 
                  speed: int = 5, 
                  physical_power: int = 40, 
                  jump_power: int = 5, 
+                 aggro_distance: int = 100,
                  iframes: int = 500, 
                  gravity: float = 0.2, 
-                 hitbox_scale: tuple = (1, 1)) -> None:
-        super().__init__(position, groups, spritesheet, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale)
-        
-        self.fix_coefficient = 0.225
+                 hitbox_scale: tuple = (1, 1),
+                 hitbox_offset: tuple = (0, 0)) -> None:
+        super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
+
+        self.aggro_distance = aggro_distance
+        # self.frame_span = 70
+        self.actions = { 
+                         'moving': {'flag': False, 'function': self.move},
+                         'jumping': {'flag': False, 'function': self.jump},
+                         'falling': {'flag': True, 'function': self.fall},
+                         'attacking': {'flag': False, 'function': self.attack},
+                         'hurt': {'flag': False, 'function': self.hurt_animation}
+                       }
+
+    def detect_actions(self, platforms_list, player: Character):
+        # Distancia hacia el jugador
+        distance_x = get_distance(self.hitbox.centerx, player.hitbox.centerx)
+        distance_y = get_distance(self.hitbox.centery, player.hitbox.centery)
+
+        # Atacar
+        if abs(distance_x) <= self.aggro_distance and abs(distance_y) <= 50:
+            self.actions['attacking']['flag'] = True
+            self.facing = "f" if distance_x <= 0 else "b"
+        else:
+            self.actions['attacking']['flag'] = False
+
+        super().detect_actions(platforms_list)
 
     def fall(self):
         self.selected_animation = 'idle'
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
+
+    def attack(self):
+        self.selected_animation = "attack"
 
     def move(self):
         self.selected_animation = 'idle'
