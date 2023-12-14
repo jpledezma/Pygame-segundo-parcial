@@ -1,6 +1,6 @@
 {
     "player": {
-        "path": "assets/sprites/jugador/HeroKnight.png",
+        "path": "assets/sprites/player/HeroKnight.png",
         "rows": 9,
         "cols": 10,
         "width": 100,
@@ -10,7 +10,7 @@
         "scale": 1
     },
     "nightborne": {
-        "path": "assets/sprites/enemigos/NightBorne.png",
+        "path": "assets/sprites/enemies/NightBorne.png",
         "rows": 6,
         "cols": 10,
         "width": 80,
@@ -20,7 +20,7 @@
         "scale": 1.2
     },
     "evil_wizard": {
-        "path": "assets/sprites/enemigos/EvilWizard.png",
+        "path": "assets/sprites/enemies/EvilWizard.png",
         "rows": 6,
         "cols": 6,
         "width": 150,
@@ -30,7 +30,7 @@
         "scale": 1.2
     },
     "bringer_of_death": {
-        "path": "assets/sprites/enemigos/BringerOfDeath.png",
+        "path": "assets/sprites/enemies/BringerOfDeath.png",
         "rows": 6,
         "cols": 8,
         "width": 140,
@@ -40,7 +40,7 @@
         "scale": 2
     },
     "shuriken_dude": {
-        "path": "assets/sprites/enemigos/ShurikenDude.png",
+        "path": "assets/sprites/enemies/ShurikenDude.png",
         "rows": 1,
         "cols": 13,
         "width": 80,
@@ -50,7 +50,7 @@
         "scale": 1
     },
     "shuriken": {
-        "path": "assets/sprites/proyectiles/Shuriken.png",
+        "path": "assets/sprites/projectiles/Shuriken.png",
         "rows": 1,
         "cols": 2,
         "width": 16,

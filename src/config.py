@@ -3,7 +3,7 @@ import pygame
 SCREEN_WIDTH = 1080
 SCREEN_HEIGHT = 600
 SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
-ICON_IMG = pygame.image.load("assets/sprites/jugador/HeroKnight_idle_0.png")
+ICON_IMG = pygame.image.load("assets/sprites/player/HeroKnight_idle_0.png")
 FPS = 90
 
 WHITE = (200, 200, 200)
