@@ -129,6 +129,15 @@ class Entity(pygame.sprite.Sprite):
         if isinstance(value, bool):
             self.__intangible = value
 
+    @property
+    def vulnerable(self):
+        return self.__vulnerable
+    
+    @vulnerable.setter
+    def vulnerable(self, value):
+        if isinstance(value, bool):
+            self.__vulnerable = value
+
 class Projectile(Entity):
     def __init__(self, 
                  groups, 
@@ -181,11 +190,15 @@ class Character(Entity):
         self.gravity = gravity
         self.jump_power = jump_power
 
+        self.stun_moment = 0
+        self.stun_duration = 0
+
         self.actions = { 
                          'moving': {'flag': False, 'function': self.move},
                          'jumping': {'flag': False, 'function': self.jump},
                          'falling': {'flag': True, 'function': self.fall},
-                         'hurt': {'flag': False, 'function': self.hurt_animation}
+                         'hurt': {'flag': False, 'function': self.hurt_animation},
+                         'freeze': {'flag': False, 'function': self.freeze}
                        }
         
     def update(self):
@@ -240,6 +253,19 @@ class Character(Entity):
         self.rect.y += self.speed_v
         self.speed_v += self.gravity
 
+    def freeze(self):
+        self.selected_animation = "hurt"
+        for action, value in self.actions.items():
+            if action != "freeze":
+                value["flag"] = False
+        if pygame.time.get_ticks() >= self.stun_duration + self.stun_moment:
+            self.actions['freeze']['flag'] = False
+
+    def stun(self, duration: int):
+        self.actions['freeze']['flag'] = True
+        self.stun_moment = pygame.time.get_ticks()
+        self.stun_duration = duration
+
     def detect_horizontal_collision(self, platform: pygame.Rect, offset: int = 0):
         # Se debería tomar self.speed o self.speed_roll dependiendo de cual sea el más alto
         if platform.colliderect((self.hitbox.x + self.speed + offset, self.hitbox.y, self.hitbox.width, self.hitbox.height)) and\
@@ -290,6 +316,7 @@ class NightBorne(Character):
                          'jumping': {'flag': False, 'function': self.jump},
                          'falling': {'flag': True, 'function': self.fall},
                          'attacking': {'flag': False, 'function': self.attack},
+                         'freeze': {'flag': False, 'function': self.freeze},
                          'hurt': {'flag': False, 'function': self.hurt_animation}
                        }
 
@@ -320,17 +347,6 @@ class NightBorne(Character):
         and abs(distance_y) <= 50:
             self.actions['moving']['flag'] = False
             self.actions['attacking']['flag'] = True
-            if self.current_sprite >= 8: # Este es el frame en el que baja la espada y ataca
-                self.attack_hitbox.width = self.attack_range_x
-                self.attack_hitbox.height = self.attack_range_y
-                self.attack_hitbox.midbottom = self.hitbox.midbottom
-                if self.facing == "f":
-                    self.attack_hitbox.left = self.hitbox.centerx
-                else:
-                    self.attack_hitbox.right = self.hitbox.centerx
-            else:
-                self.attack_hitbox.width = 0
-                self.attack_hitbox.height = 0
         else:
             self.actions['attacking']['flag'] = False
             self.attack_hitbox.width = 0
@@ -345,6 +361,17 @@ class NightBorne(Character):
     
     def attack(self):
         self.selected_animation = "attack"
+        if self.current_sprite >= 8 and not self.actions['freeze']['flag']: # Este es el frame en el que baja la espada y ataca
+            self.attack_hitbox.width = self.attack_range_x
+            self.attack_hitbox.height = self.attack_range_y
+            self.attack_hitbox.midbottom = self.hitbox.midbottom
+            if self.facing == "f":
+                self.attack_hitbox.left = self.hitbox.centerx
+            else:
+                self.attack_hitbox.right = self.hitbox.centerx
+        else:
+            self.attack_hitbox.width = 0
+            self.attack_hitbox.height = 0
         
 class EvilWizard(Character):
     def __init__(self, 
@@ -401,8 +428,13 @@ class EvilWizard(Character):
         # Atacar
         if abs(distance_x) <= self.attack_range_x + self.hitbox.width //2 - player.hitbox.width //2 \
         and abs(distance_y) <= 50:
-            self.actions['attacking']['flag'] = True
             self.actions['moving']['flag'] = False
+            if self.vulnerable:
+                self.actions['attacking']['flag'] = True
+            else:
+                self.actions['attacking']['flag'] = False
+                self.attack_hitbox.width = 0
+                self.attack_hitbox.height = 0
         else:
             self.actions['attacking']['flag'] = False
             self.attack_hitbox.width = 0
@@ -412,7 +444,6 @@ class EvilWizard(Character):
 
     def attack(self):
         self.selected_animation = "attack"
-        
         self.attack_hitbox.width = self.attack_range_x
         self.attack_hitbox.height = self.attack_range_y
         self.attack_hitbox.midbottom = self.hitbox.midbottom

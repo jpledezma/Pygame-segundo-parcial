@@ -119,14 +119,21 @@ class Level():
         
         # for entity in self.entities:
         #     entity.draw_rect(self.screen, (88, 182, 192))
+        for enemy in self.enemies:
+            if isinstance(enemy, NightBorne):
+                pygame.draw.rect(self.screen, (43, 176, 199), enemy.attack_hitbox, 2)
 
         # pygame.draw.rect(self.screen, [240, 120, 23], self.player.attack_hitbox, 1)
-        # pygame.draw.rect(self.screen, [0, 120, 230], self.player.block_hitbox, 2)
+        pygame.draw.rect(self.screen, [0, 120, 230], self.player.block_hitbox, 2)
 
         # for platform in self.platforms:
             # platform.draw_rect(self.screen, (250,0,0)) 
 
     def update(self):
+
+        self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
+        print(self.player.health)
+
         for entity in self.entities:
             entity.time_iframes(pygame.time.get_ticks())
             if entity.rect.top > SCREEN_HEIGHT or entity.rect.bottom < 0 \
@@ -140,31 +147,38 @@ class Level():
                     projectile.kill()
                     continue
 
-        self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
+        for projectile in self.enemy_projectiles:
+            if self.player.hitbox.colliderect(projectile.rect):
+                self.player.hurt(projectile.physical_power)
+                projectile.kill()
+            if self.player.block_hitbox.colliderect(projectile.rect):
+                projectile.facing = "f" if projectile.facing == "b" else "b"
+                self.player_projectiles.add(projectile)
+                self.enemy_projectiles.remove(projectile)
 
         for enemy in self.enemies:
             enemy.detect_actions(self.platforms.sprites(), self.player)
 
+            # Daño de los proyectiles del jugador a los enemigos
             for projectile in self.player_projectiles:
                 if enemy.hitbox.colliderect(projectile.rect):
                     enemy.hurt(projectile.physical_power)
                     projectile.kill()
 
-            for projectile in self.enemy_projectiles:
-                if self.player.hitbox.colliderect(projectile.rect):
-                    self.player.hurt(projectile.physical_power)
-                    projectile.kill()
-                if self.player.block_hitbox.colliderect(projectile.rect):
-                    projectile.facing = "f" if projectile.facing == "b" else "b"
-                    self.player_projectiles.add(projectile)
-                    self.enemy_projectiles.remove(projectile)
-
-            if enemy.hitbox.colliderect(self.player.hitbox):
-                self.player.hurt(enemy.physical_power // 2)
-
+            # Daño del ataque del jugador a los enemigos
             if enemy.hitbox.colliderect(self.player.attack_hitbox):
                 enemy.hurt(self.player.physical_power)
 
+            # Daño por contacto al jugador
+            if enemy.hitbox.colliderect(self.player.hitbox):
+                self.player.hurt(enemy.physical_power // 2)
+
+            # Parry a los nightborne
+            if isinstance(enemy, NightBorne) and enemy.attack_hitbox.colliderect(self.player.block_hitbox):
+                enemy.stun(1000)
+                self.player.hurt(0) # Esto es para hacer invulnerable al jugador por un tiempo
+
+            # Ataque del enemigo al jugador
             if not isinstance(enemy, ShurikenDude) \
             and enemy.attack_hitbox.colliderect(self.player.hitbox):
                 self.player.hurt(enemy.physical_power)

@@ -27,13 +27,12 @@ class Game():
 
         self.level_1_data = (self.screen, sprites_data, tile_sets_data[self.maps_data["level_1"]["tileset"]], entities_data, self.maps_data["level_1"])
         self.level_2_data = (self.screen, sprites_data, tile_sets_data[self.maps_data["level_2"]["tileset"]], entities_data, self.maps_data["level_2"])
+        self.level_3_data = (self.screen, sprites_data, tile_sets_data[self.maps_data["level_3"]["tileset"]], entities_data, self.maps_data["level_3"])
 
         self.level_1 = Level(*self.level_1_data)
         self.level_2 = Level(*self.level_2_data)
-
-        
-
-        
+        self.level_3 = Level(*self.level_3_data)
+    
     def run(self):
         running = True
         
@@ -43,8 +42,10 @@ class Game():
                     running = False       
             self.level_1 = Level(*self.level_1_data)
             self.level_2 = Level(*self.level_2_data)
+            self.level_3 = Level(*self.level_3_data)
             self.level_1.run()
             self.level_2.run()     
+            self.level_3.run()     
             
         self.close()
         
