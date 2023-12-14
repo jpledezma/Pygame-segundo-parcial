@@ -51,10 +51,23 @@ class Entity(pygame.sprite.Sprite):
         self.actions = {'hurt': {'flag': False, 'function': self.hurt_animation}}
 
     def update(self):
+        if not self.any_action():
+            self.selected_animation = "idle"
+
         # Actualizar la posicion de la hitbox
         self.hitbox_offset[0] = self.hitbox_offset_x_forwards if self.facing == "f" else self.hitbox_offset_x_backwards
         self.hitbox.x = self.rect.x + self.hitbox_offset[0]
         self.hitbox.y = self.rect.y + self.hitbox_offset[1]
+
+        self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
+
+    def update_frame(self, current_time, last_frame, key_animation):
+        if current_time - self.last_update >= self.frame_span:
+            self.current_sprite += 1
+            if self.current_sprite > last_frame:
+                self.current_sprite = 0
+            self.image = self.animations[self.facing][key_animation][self.current_sprite]
+            self.last_update = current_time
 
     def hurt(self, damage:int):
         if self.__vulnerable and not self.__intangible:
@@ -78,13 +91,20 @@ class Entity(pygame.sprite.Sprite):
     def __set_default_sprite(self):
         if isinstance(self.spritesheet, SpriteSheet):
             keys_animations = list(self.animations['f'].keys())
-            # self.groups_animations = list(self.animations.values())
             image = self.animations['f'][keys_animations[0]][0]
             return image
         
     def draw_rect(self, surface: pygame.Surface, color: tuple):
         pygame.draw.rect(surface, color, self.hitbox, 2)
         pygame.draw.rect(surface, color, self.rect, 2)
+
+    def any_action(self, exclude: str = "") -> bool:
+        flag = False
+        for key, value in self.actions.items():
+            if value['flag'] and key != exclude:
+                flag = True
+                break
+        return flag
 
     def last_sprite(self):
         if self.current_sprite >= len(self.animations[self.facing][self.selected_animation]) - 1:
@@ -114,13 +134,29 @@ class Projectile(Entity):
                  groups, 
                  spritesheet: SpriteSheet, 
                  position: tuple[int, int], 
-                 health: int = 1,
+                 facing: str = "f",
                  speed: int = 1,
                  physical_power: int = 40,
-                 iframes: int = 500, 
                  hitbox_scale: tuple = (1, 1), 
                  hitbox_offset: list = [0, 0]) -> None:
-        super().__init__(groups, spritesheet, position, health, iframes, hitbox_scale, hitbox_offset)
+        super().__init__(groups, spritesheet, position, hitbox_scale, hitbox_offset)
+
+        self.speed = speed
+        self.physical_power = physical_power
+        self.facing = facing
+
+        self.actions = {'move': {'flag': True, 'function': self.move}}
+
+    def update(self):
+        self.move()
+        super().update()
+
+    def move(self):
+        self.selected_animation = "idle"
+        if self.facing == "f":
+            self.rect.x += self.speed
+        if self.facing == "b":
+            self.rect.x -= self.speed
 
 class Character(Entity):
     def __init__(self, 
@@ -154,34 +190,8 @@ class Character(Entity):
         
     def update(self):
         super().update()
-        
-        if not self.any_action():
-            self.selected_animation = "idle"
-
         if self.speed_v >= self.terminal_velocity:
             self.speed_v = self.terminal_velocity
-
-        # if not self.actions['falling']['flag'] and not self.actions['jumping']['flag']:
-        #     self.speed_v = 0
-
-        self.update_frame(pygame.time.get_ticks(), len(self.animations[self.facing][self.selected_animation]) - 1, self.selected_animation)
-
-
-    def update_frame(self, current_time, last_frame, key_animation):
-        if current_time - self.last_update >= self.frame_span:
-            self.current_sprite += 1
-            if self.current_sprite > last_frame:
-                self.current_sprite = 0
-            self.image = self.animations[self.facing][key_animation][self.current_sprite]
-            self.last_update = current_time
-
-    def any_action(self, exclude: str = "") -> bool:
-        flag = False
-        for key, value in self.actions.items():
-            if value['flag'] and key != exclude:
-                flag = True
-                break
-        return flag
 
     def detect_actions(self, platforms_list: list):
 
@@ -561,7 +571,10 @@ class ShurikenDude(Character):
         super().__init__(groups, spritesheet, position, health, speed, physical_power, jump_power, iframes, gravity, hitbox_scale, hitbox_offset)
 
         self.aggro_distance = aggro_distance
-        # self.frame_span = 70
+        self.throw_shuriken = False
+        self.cd_attack = 1500
+        self.attack_moment = 0
+        self.frame_span = 70
         self.actions = { 
                          'moving': {'flag': False, 'function': self.move},
                          'jumping': {'flag': False, 'function': self.jump},
@@ -571,6 +584,8 @@ class ShurikenDude(Character):
                        }
 
     def detect_actions(self, platforms_list, player: Character):
+
+        self.throw_shuriken = False
         # Distancia hacia el jugador
         distance_x = get_distance(self.hitbox.centerx, player.hitbox.centerx)
         distance_y = get_distance(self.hitbox.centery, player.hitbox.centery)
@@ -591,6 +606,10 @@ class ShurikenDude(Character):
 
     def attack(self):
         self.selected_animation = "attack"
+        if pygame.time.get_ticks() >= self.attack_moment + self.cd_attack and \
+        self.current_sprite == 3:
+            self.attack_moment = pygame.time.get_ticks()
+            self.throw_shuriken = True
 
     def move(self):
         self.selected_animation = 'idle'
@@ -621,6 +640,14 @@ class Player(Character):
 
         self.cd_parry = cd_parry
         self.parry_moment = 0
+
+        self.attack_range_x = self.rect.width // 2 + 5
+        self.attack_range_y = self.rect.height
+        self.attack_hitbox = pygame.Rect(0, 0, self.attack_range_x, self.attack_range_y)
+
+        self.block_range_x = self.rect.width // 4
+        self.block_range_y = self.rect.height
+        self.block_hitbox = pygame.Rect(0, 0, self.block_range_x, self.block_range_y)
 
         self.actions = { 
                          'moving': {'flag': False, 'function': self.move},
@@ -730,10 +757,23 @@ class Player(Character):
                 self.actions['falling']['flag'] = False
                 break
 
+        if not self.actions['rolling']['flag']:
+            self.intangible = False
+
         # Ejecutar acciones
         for action in self.actions.values():
             if action['flag']:
                 action['function']()
+
+        # Hitbox de ataque
+        if not self.actions['attacking']['flag']:
+            self.attack_hitbox.width = 0
+            self.attack_hitbox.height = 0
+
+        # Hitbox de bloqueo / parry
+        if not self.actions['parry']['flag']:
+            self.block_hitbox.width = 0
+            self.block_hitbox.height = 0
 
     def move(self):
         if self.actions['moving']['flag']:
@@ -745,12 +785,26 @@ class Player(Character):
 
     def attack(self):
         self.selected_animation = f"at{self.current_attack}"
+        self.attack_hitbox.width = self.attack_range_x
+        self.attack_hitbox.height = self.attack_range_y
+        self.attack_hitbox.centery = self.hitbox.centery
+        if self.facing == "f":
+            self.attack_hitbox.left = self.hitbox.centerx
+        else:
+            self.attack_hitbox.right = self.hitbox.centerx
         if self.last_sprite():
             self.actions['attacking']['flag'] = False
             self.current_attack = 1
 
     def block(self):
         self.selected_animation = "block_idle"
+        self.block_hitbox.width = self.block_range_x
+        self.block_hitbox.height = self.block_range_y
+        self.block_hitbox.centery = self.hitbox.centery
+        if self.facing == "f":
+            self.block_hitbox.left = self.hitbox.centerx
+        else:
+            self.block_hitbox.right = self.hitbox.centerx
         if self.last_sprite():
             self.actions['parry']['flag'] = False
 

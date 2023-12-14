@@ -25,9 +25,13 @@ class Game():
         self.maps_data_path = os.path.join(os.getcwd(), "data", "levels.json")
         self.maps_data = read_json(self.maps_data_path)
 
-        level_1 = Level(self.screen, sprites_data, tile_sets_data[self.maps_data["level_1"]["tileset"]], entities_data, self.maps_data["level_1"])
+        self.level_1_data = (self.screen, sprites_data, tile_sets_data[self.maps_data["level_1"]["tileset"]], entities_data, self.maps_data["level_1"])
+        self.level_2_data = (self.screen, sprites_data, tile_sets_data[self.maps_data["level_2"]["tileset"]], entities_data, self.maps_data["level_2"])
 
-        level_1.run()
+        self.level_1 = Level(*self.level_1_data)
+        self.level_2 = Level(*self.level_2_data)
+
+        
 
         
     def run(self):
@@ -36,19 +40,13 @@ class Game():
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT:
-                    running = False
-
-            self.draw()
-            self.update()
-            
+                    running = False       
+            self.level_1 = Level(*self.level_1_data)
+            self.level_2 = Level(*self.level_2_data)
+            self.level_1.run()
+            self.level_2.run()     
             
         self.close()
-
-    def draw(self):
-        pass
-
-    def update(self):
-        pass
         
     def close(self):
         pygame.quit()

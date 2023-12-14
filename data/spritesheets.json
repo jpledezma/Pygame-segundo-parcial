@@ -48,5 +48,15 @@
         "anim_keys": ["idle", "attack", "hurt"],
         "anim_frames": [1, 8, 4],
         "scale": 1
+    },
+    "shuriken": {
+        "path": "assets/sprites/proyectiles/Shuriken.png",
+        "rows": 1,
+        "cols": 2,
+        "width": 16,
+        "height": 15,
+        "anim_keys": ["idle"],
+        "anim_frames": [2],
+        "scale": 1.2
     }
 }

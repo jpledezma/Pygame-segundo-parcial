@@ -58,10 +58,8 @@
         "hitbox_offset": [35, 75]
     },
     "shuriken": {
-        "health":  1, 
-        "speed":  1, 
+        "speed":  4, 
         "physical_power": 40, 
-        "iframes":  700, 
         "hitbox_scale": [1, 1],
         "hitbox_offset": [0, 0]
     }

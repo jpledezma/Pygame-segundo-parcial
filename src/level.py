@@ -26,16 +26,21 @@ class Level():
         self.entities_data = entities_data
         self.map_data = map_data
 
+        self.player_group = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
+        self.final_boss_group = pygame.sprite.Group()
+
+        self.projectiles = pygame.sprite.Group()
+        self.enemy_projectiles = pygame.sprite.Group()
+        self.player_projectiles = pygame.sprite.Group()
+
+        self.entities = pygame.sprite.Group()
         self.platforms = pygame.sprite.Group()
         
-        self.entities = pygame.sprite.Group()
-        self.final_boss_group = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
 
-        tileset_img = pygame.image.load(tileset_data["path_img"])
-        
-        tileset = Tileset(tileset_img, tileset_data["tile_width"], tileset_data["tile_height"])
+        tileset_level_img = pygame.image.load(tileset_data["path_img"])
+        tileset_level = Tileset(tileset_level_img, tileset_data["tile_width"], tileset_data["tile_height"])
         
         self.background_layers = []
         for background_path in tileset_data["background_layers"]:
@@ -45,46 +50,38 @@ class Level():
             self.background_layers.append(background_layer)
 
         tiles_map = read_tile_map(map_data["path_map"])
-        self.surfaces_list = tileset.get_map(tiles_map)
+        self.surfaces_list = tileset_level.get_map(tiles_map)
 
 
         for item in self.surfaces_list:
             Platform(item[0], item[1], (self.all_sprites, self.platforms))
 
-
-
+        # Instanciar jugador
         player_img = pygame.image.load(self.spritesheets_data["player"]["path"]).convert_alpha()
         player_spritesheet = SpriteSheet(player_img, *list(self.spritesheets_data["player"].values())[1:])
+        self.player = Player((self.all_sprites, self.entities, self.player_group), player_spritesheet, map_data["player_position"], *self.entities_data["player"].values())
 
-        # Jugador
-        self.player = Player((self.all_sprites, self.entities), player_spritesheet, map_data["player_position"], *self.entities_data["player"].values())
-
-        # Enemigos
+        # Instanciar enemigos
+        # -----------------------------------------------------------------------------------------------------------------------------------------------------------
         for enemies, positions in self.map_data["enemies_positions"].items():
-            if enemies == "nightbornes":
-                nightborne_img = pygame.image.load(self.spritesheets_data["nightborne"]["path"]).convert_alpha()
-                nightborne_spritesheet = SpriteSheet(nightborne_img, *list(self.spritesheets_data["nightborne"].values())[1:])
+            enemy_img = pygame.image.load(self.spritesheets_data[enemies]["path"]).convert_alpha()
+            enemy_spritesheet = SpriteSheet(enemy_img, *list(self.spritesheets_data[enemies].values())[1:])
+            if enemies == "nightborne":
                 for position in positions:
-                    NightBorne((self.all_sprites, self.entities, self.enemies), nightborne_spritesheet, position, *self.entities_data["nightborne"].values())
-           
-            if enemies == "evil_wizards":
-                evil_wizard_img = pygame.image.load(self.spritesheets_data["evil_wizard"]["path"]).convert_alpha()
-                evil_wizard_spritesheet = SpriteSheet(evil_wizard_img, *list(self.spritesheets_data["evil_wizard"].values())[1:])
+                    NightBorne((self.all_sprites, self.entities, self.enemies), enemy_spritesheet, position, *self.entities_data["nightborne"].values())
+            if enemies == "evil_wizard":
                 for position in positions:
-                    EvilWizard((self.all_sprites, self.entities, self.enemies), evil_wizard_spritesheet, position, *self.entities_data["evil_wizard"].values())
-
-            if enemies == "shuriken_dudes":
-                shuriken_dude_img = pygame.image.load(self.spritesheets_data["shuriken_dude"]["path"]).convert_alpha()
-                shuriken_dude_spritesheet = SpriteSheet(shuriken_dude_img, *list(self.spritesheets_data["shuriken_dude"].values())[1:])
+                    EvilWizard((self.all_sprites, self.entities, self.enemies), enemy_spritesheet, position, *self.entities_data["evil_wizard"].values())
+            if enemies == "shuriken_dude":
                 for position in positions:
-                    ShurikenDude((self.all_sprites, self.entities, self.enemies), shuriken_dude_spritesheet, position, *self.entities_data["shuriken_dude"].values())
-           
+                    ShurikenDude((self.all_sprites, self.entities, self.enemies), enemy_spritesheet, position, *self.entities_data["shuriken_dude"].values())
             if enemies == "bringer_of_death":
-                bringer_of_death_img = pygame.image.load(self.spritesheets_data["bringer_of_death"]["path"]).convert_alpha()
-                bringer_of_death_spritesheet = SpriteSheet(bringer_of_death_img, *list(self.spritesheets_data["bringer_of_death"].values())[1:])
-                self.final_boss = BringerOfDeath(self.final_boss_group, bringer_of_death_spritesheet, positions, *self.entities_data["bringer_of_death"].values())
+                self.final_boss = BringerOfDeath(self.final_boss_group, enemy_spritesheet, positions, *self.entities_data["bringer_of_death"].values())
                 self.final_boss_flag = True
-           
+        # -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+        self.flag = True
+    
         self.keydown_keys = []
         
     def run(self):
@@ -99,13 +96,11 @@ class Level():
                 if event.type == KEYDOWN:
                     if not event.key in self.keydown_keys:
                         self.keydown_keys.append(event.key)
+                    if event.key == K_t:
+                        running = False
                 if event.type == KEYUP:
                     if event.key in self.keydown_keys:
                         self.keydown_keys.remove(event.key)
-
-                # if event.type == MOUSEBUTTONDOWN:
-                #     if self.player.rect.collidepoint(pygame.mouse.get_pos()):
-                #         self.player.hurt(100)
 
             if self.enemies.sprites() == [] and self.final_boss_flag:
                 self.all_sprites.add(self.final_boss)
@@ -114,7 +109,6 @@ class Level():
             self.draw()
             self.update()
             
-            
         return
 
     def draw(self):
@@ -122,26 +116,66 @@ class Level():
             self.screen.blit(background, (0, 0))
 
         self.all_sprites.draw(self.screen)
+        
+        # for entity in self.entities:
+        #     entity.draw_rect(self.screen, (88, 182, 192))
 
-        for entity in self.entities:
-            entity.draw_rect(self.screen, (88, 182, 192))
+        # pygame.draw.rect(self.screen, [240, 120, 23], self.player.attack_hitbox, 1)
+        # pygame.draw.rect(self.screen, [0, 120, 230], self.player.block_hitbox, 2)
 
         # for platform in self.platforms:
             # platform.draw_rect(self.screen, (250,0,0)) 
 
     def update(self):
-
         for entity in self.entities:
             entity.time_iframes(pygame.time.get_ticks())
+            if entity.rect.top > SCREEN_HEIGHT or entity.rect.bottom < 0 \
+            or entity.rect.left > SCREEN_WIDTH or entity.rect.right < 0:
+                entity.kill()
+                print("mi planeta me necesita")
+
+        for projectile in self.projectiles:
+            for platform in self.platforms:
+                if projectile.rect.colliderect(platform.rect):
+                    projectile.kill()
+                    continue
 
         self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
 
         for enemy in self.enemies:
             enemy.detect_actions(self.platforms.sprites(), self.player)
+
+            for projectile in self.player_projectiles:
+                if enemy.hitbox.colliderect(projectile.rect):
+                    enemy.hurt(projectile.physical_power)
+                    projectile.kill()
+
+            for projectile in self.enemy_projectiles:
+                if self.player.hitbox.colliderect(projectile.rect):
+                    self.player.hurt(projectile.physical_power)
+                    projectile.kill()
+                if self.player.block_hitbox.colliderect(projectile.rect):
+                    projectile.facing = "f" if projectile.facing == "b" else "b"
+                    self.player_projectiles.add(projectile)
+                    self.enemy_projectiles.remove(projectile)
+
             if enemy.hitbox.colliderect(self.player.hitbox):
+                self.player.hurt(enemy.physical_power // 2)
+
+            if enemy.hitbox.colliderect(self.player.attack_hitbox):
+                enemy.hurt(self.player.physical_power)
+
+            if not isinstance(enemy, ShurikenDude) \
+            and enemy.attack_hitbox.colliderect(self.player.hitbox):
                 self.player.hurt(enemy.physical_power)
-                if self.player.actions['attacking']['flag']:
-                    enemy.hurt(self.player.physical_power)
+
+            # Lanzar shuriken
+            if isinstance(enemy, ShurikenDude) and enemy.throw_shuriken:
+                self.flag = False
+                shuriken_img = pygame.image.load(self.spritesheets_data["shuriken"]["path"]).convert_alpha()
+                shuriken_spritesheet = SpriteSheet(shuriken_img, *list(self.spritesheets_data["shuriken"].values())[1:])
+                Projectile((self.all_sprites, self.entities, self.projectiles, self.enemy_projectiles), shuriken_spritesheet, enemy.rect.center, enemy.facing, *self.entities_data["shuriken"].values())
+
             if enemy.health <= 0:
                 enemy.kill()
 

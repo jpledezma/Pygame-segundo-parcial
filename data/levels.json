@@ -4,7 +4,7 @@
         "tileset": "oak_woods",
         "player_position": [40, 400],
         "enemies_positions": {
-            "shuriken_dudes": [[50, 30], [30, 200], [360, 320], [420, 490], [675, 400], [810, 450], [850, 180]]
+            "shuriken_dude": [[50, 30], [30, 200], [360, 320], [420, 490], [675, 400], [810, 450], [850, 180]]
         }
     },
     "level_2": {
@@ -13,7 +13,7 @@
         "path_decoration": "data/gothicvania_church_decoration_map.csv",
         "player_position": [40, 400],
         "enemies_positions": {
-            "evil_wizards": [[530, 180], [380, 380], [640, 380], [900, 380], [900, 20]]
+            "evil_wizard": [[530, 180], [380, 380], [640, 380], [900, 380], [900, 20]]
         }
     },
     "level_3": {
@@ -21,7 +21,7 @@
         "tileset": "pixel_fantasy_caves",
         "player_position": [40, 400],
         "enemies_positions": {
-            "nightbornes": [[80, 180], [260, 250], [440, 530], [630, 530], [760, 250], [950, 180], [870, 360], [950, 450], [800, 530]]
+            "nightborne": [[80, 180], [260, 250], [440, 530], [630, 530], [760, 250], [950, 180], [870, 360], [950, 450], [800, 530]]
         }
     }
 }
