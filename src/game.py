@@ -36,7 +36,8 @@ class Game():
 
 
         self.main_menu = MainMenu(self.screen)
-        # self.pause_menu = Menu(self.screen)
+        self.options_menu = OptionsMenu(self.screen)
+        # self.pause_menu = PauseMenu(self.screen)
             
     def run(self):
         running = True
@@ -46,6 +47,7 @@ class Game():
                     running = False
 
             self.main_menu.run()
+            self.options_menu.run()
             self.level_1.run()
 
             pygame.display.flip()
