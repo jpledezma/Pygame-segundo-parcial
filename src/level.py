@@ -1,10 +1,11 @@
 import pygame
+import os
 from pygame.locals import *
 from config import *
 from entities import *
 from platforms import *
-import os
 from utils import *
+from hud import *
 
 class Level():
     def __init__(self, screen: pygame.Surface, 
@@ -18,6 +19,7 @@ class Level():
         self.clock = pygame.time.Clock()
 
         self.screen = screen
+        self.hud = HUD()
 
         self.final_boss_flag = False
 
@@ -85,8 +87,14 @@ class Level():
                 self.final_boss_flag = True
         # -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
-        self.flag = True
-    
+        self.enemies_killed = 0
+        self.keys_collected = 0
+        self.timer = 60
+
+        self.player_max_hp = self.player.health
+
+        self.timer_count = FPS
+
         self.keydown_keys = []
         
     def run(self):
@@ -100,7 +108,7 @@ class Level():
                 if event.type == KEYDOWN:
                     if not event.key in self.keydown_keys:
                         self.keydown_keys.append(event.key)
-                    if event.key == K_p:
+                    if event.key == K_p or event.key == K_ESCAPE:
                         return "pause"
                 if event.type == KEYUP:
                     if event.key in self.keydown_keys:
@@ -115,6 +123,10 @@ class Level():
 
             if not self.enemies and not self.final_boss_group:
                 return (0, 0)
+            
+            # Perder si se muere el player
+            if not self.player_group:
+                return (0, 0)
 
             self.update()
             self.draw()
@@ -125,6 +137,7 @@ class Level():
             self.screen.blit(background, (0, 0))
 
         self.all_sprites.draw(self.screen)
+        self.hud.draw(self.screen, self.timer, self.enemies_killed, 17, self.player.health, self.player_max_hp)
 
         pygame.display.flip()
 
@@ -132,6 +145,8 @@ class Level():
 
         # Acciones del jugador
         self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
+        if self.player.health <= 0:
+            self.player.kill()
 
         # Plataformas moviles
         if self.mobile_platform:
@@ -202,7 +217,6 @@ class Level():
 
             # Lanzar shuriken
             if isinstance(enemy, ShurikenDude) and enemy.throw_shuriken:
-                self.flag = False
                 shuriken_img = pygame.image.load(self.spritesheets_data["shuriken"]["path"]).convert_alpha()
                 shuriken_spritesheet = SpriteSheet(shuriken_img, *list(self.spritesheets_data["shuriken"].values())[1:])
                 Projectile((self.all_sprites, self.entities, self.projectiles, self.enemy_projectiles), shuriken_spritesheet, enemy.rect.center, enemy.facing, *self.entities_data["shuriken"].values())
@@ -210,6 +224,15 @@ class Level():
             # Eliminar al enemigo
             if enemy.health <= 0:
                 enemy.kill()
+                self.enemies_killed += 1
+
+            self.timer_count -= 1
+            if self.timer_count <= 0:
+                self.timer_count = FPS * 8
+                self.timer -= 1
+
+            if self.timer <= 0:
+                self.player.kill()
 
         self.all_sprites.update()
 

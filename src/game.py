@@ -89,6 +89,7 @@ class Game():
                 self.previous_selection = "lvl1"
                 self.selection = self.level_1.run()
                 if not isinstance(self.selection, str):
+                    self.level_1 = Level(*self.level_1_data)
                     print("pasado")
                     self.selection = "selection"
 
@@ -96,6 +97,7 @@ class Game():
                 self.previous_selection = "lvl2"
                 self.selection = self.level_2.run()
                 if not isinstance(self.selection, str):
+                    self.level_2 = Level(*self.level_2_data, self.mobile_platform)
                     print("pasado")
                     self.selection = "selection"
 
@@ -103,6 +105,7 @@ class Game():
                 self.previous_selection = "lvl3"
                 self.selection = self.level_3.run()
                 if not isinstance(self.selection, str):
+                    self.level_3 = Level(*self.level_3_data)
                     print("pasado")
                     self.selection = "selection"
                 # añadir flags para desbloquear niveles 
