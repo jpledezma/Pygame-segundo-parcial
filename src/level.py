@@ -12,7 +12,7 @@ class Level():
                  tileset_data: dict, 
                  entities_data: dict, 
                  map_data: dict,
-                 *aditional_groups: pygame.sprite.Group
+                 mobile_platform: Platform = None
                  ) -> None:
 
         self.clock = pygame.time.Clock()
@@ -38,6 +38,11 @@ class Level():
         self.platforms = pygame.sprite.Group()
         
         self.all_sprites = pygame.sprite.Group()
+        if mobile_platform:
+            self.platforms.add(mobile_platform)
+            self.all_sprites.add(mobile_platform)
+            self.mobile_platform_facing = "f"
+        self.mobile_platform = mobile_platform
 
         tileset_level_img = pygame.image.load(tileset_data["path_img"])
         tileset_level = Tileset(tileset_level_img, tileset_data["tile_width"], tileset_data["tile_height"])
@@ -86,7 +91,6 @@ class Level():
         
     def run(self):
         running = True
-        
         while running:
             self.clock.tick(FPS)
             for event in pygame.event.get():
@@ -128,6 +132,19 @@ class Level():
 
         # Acciones del jugador
         self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
+
+        # Plataformas moviles
+        if self.mobile_platform:
+            if self.mobile_platform.rect.left < 300:
+                self.mobile_platform_facing = "f"
+            if self.mobile_platform.rect.right > 800:
+                self.mobile_platform_facing = "b"
+            
+            if self.mobile_platform_facing == "f":
+                self.mobile_platform.rect.centerx += 1
+            else:
+                self.mobile_platform.rect.centerx -= 1
+        
 
         # Medir los iframes de las entidades y eliminarlas si se salen de la pantalla
         for entity in self.entities:
