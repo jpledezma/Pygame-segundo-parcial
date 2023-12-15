@@ -91,11 +91,11 @@ class MainMenu(Menu):
         self.text_rect.center = (SCREEN_WIDTH //2, 100)
 
         self.button_play = Button(pygame.Rect(400, 200, 220, 70), "Play")
-        self.button_select_level = Button(pygame.Rect(400, 300, 220, 70), "Select Level")
+        self.button_ranking = Button(pygame.Rect(400, 300, 220, 70), "Ranking")
         self.button_options = Button(pygame.Rect(400, 400, 220, 70), "Options")
         self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Exit to Desktop")
 
-        self.buttons = [self.button_play, self.button_select_level, self.button_options, self.button_exit]
+        self.buttons = [self.button_play, self.button_ranking, self.button_options, self.button_exit]
 
         for button in self.buttons:
             button.rect.centerx = SCREEN_WIDTH // 2
@@ -116,9 +116,9 @@ class MainMenu(Menu):
                 if event.type == MOUSEBUTTONDOWN:
                     if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
                         self.close()
+                    if self.button_ranking.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
                     if self.button_options.rect.collidepoint(pygame.mouse.get_pos()):
-                        pass
-                    if self.button_select_level.rect.collidepoint(pygame.mouse.get_pos()):
                         pass
                     if self.button_play.rect.collidepoint(pygame.mouse.get_pos()):
                         return
@@ -165,6 +165,9 @@ class OptionsMenu(Menu):
 
         self.slider_music_pressed = False
         self.slider_effects_pressed = False
+
+        self.volume_music = 1
+        self.volume_effects = 1
         
         self.buttons = [self.button_music, self.button_exit, self.slider_music, self.slider_effects]
 
@@ -211,10 +214,10 @@ class OptionsMenu(Menu):
                 else:
                     button.hover = False
 
-            if self.slider_music_pressed:
+            if self.slider_music_pressed and self.slider_music.rect.collidepoint(pygame.mouse.get_pos()):
                 self.slider_music.rect.centerx = pygame.mouse.get_pos()[0]
 
-            if self.slider_effects_pressed:
+            if self.slider_effects_pressed and self.slider_effects.rect.collidepoint(pygame.mouse.get_pos()):
                 self.slider_effects.rect.centerx = pygame.mouse.get_pos()[0]
 
             if self.slider_music.rect.centerx <= self.range_slider_music.left:
@@ -226,5 +229,62 @@ class OptionsMenu(Menu):
                 self.slider_effects.rect.centerx = self.range_slider_effects.left
             if self.slider_effects.rect.centerx >= self.range_slider_effects.right:
                 self.slider_effects.rect.centerx = self.range_slider_effects.right
+            
+            self.volume_music = self.get_volume(self.slider_music.rect.centerx)
+            self.volume_effects = self.get_volume(self.slider_effects.rect.centerx)
+
+            self.draw()
+
+    def get_volume(self, value: int):
+        max_value = self.range_slider_effects.right - self.range_slider_effects.left
+        value = value - self.range_slider_effects.left
+
+        volume = value / max_value
+
+        return volume
+    
+class PauseMenu(Menu):
+    def __init__(self, screen: pygame.Surface) -> None:
+        super().__init__(screen)
+        
+        self.text_surface = self.font.render("Pause", True, (255, 230, 0))
+        self.text_rect = self.text_surface.get_rect()
+        self.text_rect.center = (SCREEN_WIDTH // 2, 200)
+
+        self.button_continue = Button(pygame.Rect(400, 300, 220, 70), "Continue")
+        self.button_options = Button(pygame.Rect(400, 400, 220, 70), "Options")
+        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Main Menu")
+
+        self.buttons = [self.button_continue, self.button_options, self.button_exit]
+
+        for button in self.buttons:
+            button.rect.centerx = SCREEN_WIDTH // 2
+            button.text_rect.centerx = SCREEN_WIDTH // 2
+
+    def draw(self):
+        self.screen.blit(self.filter, (0, 0))
+        self.screen.blit(self.text_surface, self.text_rect)
+        for button in self.buttons:
+            button.draw(self.screen)
+        super().draw()
+        
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    self.close()
+                if event.type == MOUSEBUTTONDOWN:
+                    if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+                    if self.button_options.rect.collidepoint(pygame.mouse.get_pos()):
+                        pass
+                    if self.button_continue.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+            
+            for button in self.buttons:
+                if button.rect.collidepoint(pygame.mouse.get_pos()):
+                    button.hover = True
+                else:
+                    button.hover = False
             
             self.draw()

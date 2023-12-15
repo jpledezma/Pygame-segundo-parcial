@@ -37,7 +37,7 @@ class Game():
 
         self.main_menu = MainMenu(self.screen)
         self.options_menu = OptionsMenu(self.screen)
-        # self.pause_menu = PauseMenu(self.screen)
+        self.pause_menu = PauseMenu(self.screen)
             
     def run(self):
         running = True
@@ -46,9 +46,10 @@ class Game():
                 if event.type == QUIT:
                     running = False
 
-            self.main_menu.run()
-            self.options_menu.run()
             self.level_1.run()
+            self.pause_menu.run()
+            self.main_menu.run()
+            # self.options_menu.run()
 
             pygame.display.flip()
         
