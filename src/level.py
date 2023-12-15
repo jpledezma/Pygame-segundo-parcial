@@ -97,19 +97,21 @@ class Level():
                     if not event.key in self.keydown_keys:
                         self.keydown_keys.append(event.key)
                     if event.key == K_p:
-                        running = False
+                        return "pause"
                 if event.type == KEYUP:
                     if event.key in self.keydown_keys:
                         self.keydown_keys.remove(event.key)
 
+            # Añadir al jefe final
             if self.enemies.sprites() == [] and self.final_boss_flag:
                 self.all_sprites.add(self.final_boss)
+                self.enemies.add(self.final_boss)
+                self.entities.add(self.final_boss)
                 self.final_boss_flag = False
 
             self.update()
             self.draw()
-            
-        return
+
 
     def draw(self):
         for background in self.background_layers:

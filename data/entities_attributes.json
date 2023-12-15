@@ -2,7 +2,7 @@
     "player": {
         "health": 1000,
         "speed": 3,
-        "physical_power": 40,
+        "physical_power": 50,
         "magic_power": 55,
         "jump_power": 5,
         "iframes": 1000,
@@ -47,7 +47,7 @@
         "hitbox_offset": [22, 10]
     },
     "bringer_of_death": {
-        "health":  1500, 
+        "health":  500, 
         "speed":  1, 
         "physical_power":  150, 
         "jump_power":  5, 
