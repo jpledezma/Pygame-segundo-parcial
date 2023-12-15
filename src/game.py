@@ -3,6 +3,7 @@ from pygame.locals import *
 from config import *
 import os
 from level import *
+from menus import *
 
 class Game():
     def __init__(self) -> None:
@@ -32,21 +33,23 @@ class Game():
         self.level_1 = Level(*self.level_1_data)
         self.level_2 = Level(*self.level_2_data)
         self.level_3 = Level(*self.level_3_data)
-    
+
+
+        self.main_menu = MainMenu(self.screen)
+        # self.pause_menu = Menu(self.screen)
+            
     def run(self):
         running = True
-        
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT:
-                    running = False       
-            self.level_1 = Level(*self.level_1_data)
-            self.level_2 = Level(*self.level_2_data)
-            self.level_3 = Level(*self.level_3_data)
+                    running = False
+
+            self.main_menu.run()
             self.level_1.run()
-            self.level_2.run()     
-            self.level_3.run()     
-            
+
+            pygame.display.flip()
+        
         self.close()
         
     def close(self):

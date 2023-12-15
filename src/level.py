@@ -96,7 +96,7 @@ class Level():
                 if event.type == KEYDOWN:
                     if not event.key in self.keydown_keys:
                         self.keydown_keys.append(event.key)
-                    if event.key == K_t:
+                    if event.key == K_p:
                         running = False
                 if event.type == KEYUP:
                     if event.key in self.keydown_keys:
@@ -106,8 +106,8 @@ class Level():
                 self.all_sprites.add(self.final_boss)
                 self.final_boss_flag = False
 
-            self.draw()
             self.update()
+            self.draw()
             
         return
 
@@ -116,24 +116,15 @@ class Level():
             self.screen.blit(background, (0, 0))
 
         self.all_sprites.draw(self.screen)
-        
-        # for entity in self.entities:
-        #     entity.draw_rect(self.screen, (88, 182, 192))
-        for enemy in self.enemies:
-            if isinstance(enemy, NightBorne):
-                pygame.draw.rect(self.screen, (43, 176, 199), enemy.attack_hitbox, 2)
 
-        # pygame.draw.rect(self.screen, [240, 120, 23], self.player.attack_hitbox, 1)
-        pygame.draw.rect(self.screen, [0, 120, 230], self.player.block_hitbox, 2)
-
-        # for platform in self.platforms:
-            # platform.draw_rect(self.screen, (250,0,0)) 
+        pygame.display.flip()
 
     def update(self):
 
+        # Acciones del jugador
         self.player.detect_actions(self.platforms.sprites(), self.keydown_keys)
-        print(self.player.health)
 
+        # Medir los iframes de las entidades y eliminarlas si se salen de la pantalla
         for entity in self.entities:
             entity.time_iframes(pygame.time.get_ticks())
             if entity.rect.top > SCREEN_HEIGHT or entity.rect.bottom < 0 \
@@ -141,21 +132,25 @@ class Level():
                 entity.kill()
                 print("mi planeta me necesita")
 
+        # Eliminar los proyectiles que colisionen con plataformas
         for projectile in self.projectiles:
             for platform in self.platforms:
                 if projectile.rect.colliderect(platform.rect):
                     projectile.kill()
                     continue
 
+        # Proyectiles de los enemigos
         for projectile in self.enemy_projectiles:
             if self.player.hitbox.colliderect(projectile.rect):
                 self.player.hurt(projectile.physical_power)
-                projectile.kill()
+                if not self.player.intangible:
+                    projectile.kill()
             if self.player.block_hitbox.colliderect(projectile.rect):
                 projectile.facing = "f" if projectile.facing == "b" else "b"
                 self.player_projectiles.add(projectile)
                 self.enemy_projectiles.remove(projectile)
 
+        # Acciones de los enemigos
         for enemy in self.enemies:
             enemy.detect_actions(self.platforms.sprites(), self.player)
 
@@ -190,12 +185,11 @@ class Level():
                 shuriken_spritesheet = SpriteSheet(shuriken_img, *list(self.spritesheets_data["shuriken"].values())[1:])
                 Projectile((self.all_sprites, self.entities, self.projectiles, self.enemy_projectiles), shuriken_spritesheet, enemy.rect.center, enemy.facing, *self.entities_data["shuriken"].values())
 
+            # Eliminar al enemigo
             if enemy.health <= 0:
                 enemy.kill()
 
         self.all_sprites.update()
-
-        pygame.display.flip()
 
     def close(self):
         pygame.quit()
