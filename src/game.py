@@ -34,10 +34,16 @@ class Game():
         self.level_2 = Level(*self.level_2_data)
         self.level_3 = Level(*self.level_3_data)
 
-
         self.main_menu = MainMenu(self.screen)
         self.options_menu = OptionsMenu(self.screen)
         self.pause_menu = PauseMenu(self.screen)
+        self.ranking_menu = RankingMenu(self.screen)
+        self.selection_menu = SelectionMenu(self.screen)
+
+        self.level_1_passed = False
+        self.level_2_passed = False
+
+        self.selected_level = 1
             
     def run(self):
         running = True
@@ -46,9 +52,13 @@ class Game():
                 if event.type == QUIT:
                     running = False
 
-            self.level_1.run()
-            self.pause_menu.run()
             self.main_menu.run()
+            self.selection_menu.run()
+            self.level_1.run()
+            # self.level_2.run()
+            # self.level_3.run()
+            # self.pause_menu.run()
+            # self.ranking_menu.run()
             # self.options_menu.run()
 
             pygame.display.flip()

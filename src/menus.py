@@ -93,7 +93,7 @@ class MainMenu(Menu):
         self.button_play = Button(pygame.Rect(400, 200, 220, 70), "Play")
         self.button_ranking = Button(pygame.Rect(400, 300, 220, 70), "Ranking")
         self.button_options = Button(pygame.Rect(400, 400, 220, 70), "Options")
-        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Exit to Desktop")
+        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Quit game")
 
         self.buttons = [self.button_play, self.button_ranking, self.button_options, self.button_exit]
 
@@ -281,6 +281,95 @@ class PauseMenu(Menu):
                     if self.button_continue.rect.collidepoint(pygame.mouse.get_pos()):
                         return
             
+            for button in self.buttons:
+                if button.rect.collidepoint(pygame.mouse.get_pos()):
+                    button.hover = True
+                else:
+                    button.hover = False
+            
+            self.draw()
+
+class RankingMenu(Menu):
+    def __init__(self, screen: pygame.Surface) -> None:
+        super().__init__(screen)
+        
+        self.text_surface = self.font.render("Ranking", True, (218, 188, 21))
+        self.text_rect = self.text_surface.get_rect()
+        self.text_rect.center = (SCREEN_WIDTH //2, 100)
+
+        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Main Menu")
+
+        self.buttons = [self.button_exit]
+
+        for button in self.buttons:
+            button.rect.centerx = SCREEN_WIDTH // 2
+            button.text_rect.centerx = SCREEN_WIDTH // 2
+
+    def draw(self):
+        self.screen.blit(self.background_img, (0, 0))
+        self.screen.blit(self.text_surface, self.text_rect)
+        for button in self.buttons:
+            button.draw(self.screen)
+        super().draw()
+        
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    self.close()
+                if event.type == MOUSEBUTTONDOWN:
+                    if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+
+            for button in self.buttons:
+                if button.rect.collidepoint(pygame.mouse.get_pos()):
+                    button.hover = True
+                else:
+                    button.hover = False
+            
+            self.draw()
+
+class SelectionMenu(Menu):
+    def __init__(self, screen: pygame.Surface) -> None:
+        super().__init__(screen)
+        
+        self.text_surface = self.font.render("Select Level", True, (218, 188, 21))
+        self.text_rect = self.text_surface.get_rect()
+        self.text_rect.center = (SCREEN_WIDTH //2, 100)
+
+        self.button_lvl_1 = Button(pygame.Rect(400, 180, 220, 70), "Level 1")
+        self.button_lvl_2 = Button(pygame.Rect(400, 280, 220, 70), "Level 2")
+        self.button_lvl_3 = Button(pygame.Rect(400, 380, 220, 70), "Level 3")
+        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Main Menu")
+
+        self.buttons = [self.button_exit, self.button_lvl_1, self.button_lvl_2, self.button_lvl_3]
+
+        for button in self.buttons:
+            button.rect.centerx = SCREEN_WIDTH // 2
+            button.text_rect.centerx = SCREEN_WIDTH // 2
+
+    def draw(self):
+        self.screen.blit(self.background_img, (0, 0))
+        self.screen.blit(self.text_surface, self.text_rect)
+        for button in self.buttons:
+            button.draw(self.screen)
+        super().draw()
+        
+    def run(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    self.close()
+                if event.type == MOUSEBUTTONDOWN:
+                    if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+                    if self.button_lvl_1.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+                    if self.button_lvl_2.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+                    if self.button_lvl_3.rect.collidepoint(pygame.mouse.get_pos()):
+                        return
+
             for button in self.buttons:
                 if button.rect.collidepoint(pygame.mouse.get_pos()):
                     button.hover = True
