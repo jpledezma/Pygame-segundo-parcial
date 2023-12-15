@@ -2,9 +2,9 @@
     "player": {
         "health": 1000,
         "speed": 3,
-        "physical_power": 50,
+        "physical_power": 500,
         "magic_power": 55,
-        "jump_power": 5,
+        "jump_power": 6,
         "iframes": 1000,
         "cd_parry": 1500,
         "cd_roll": 1500,
