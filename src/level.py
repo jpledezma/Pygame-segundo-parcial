@@ -109,6 +109,9 @@ class Level():
                 self.entities.add(self.final_boss)
                 self.final_boss_flag = False
 
+            if not self.enemies and not self.final_boss_group:
+                return (0, 0)
+
             self.update()
             self.draw()
 

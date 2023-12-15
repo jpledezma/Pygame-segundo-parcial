@@ -43,7 +43,19 @@ class Game():
         self.level_1_passed = False
         self.level_2_passed = False
 
-        self.selected_level = 1
+        self.selection = "main_menu"
+        self.previous_selection = "main_menu"
+
+        self.active = {
+            "lvl1": False,
+            "lvl2": False,
+            "lvl3": False,
+            "main_menu": False,
+            "selection": False,
+            "ranking": False,
+            "pause": False,
+            "options": False,
+            }
             
     def run(self):
         running = True
@@ -52,14 +64,54 @@ class Game():
                 if event.type == QUIT:
                     running = False
 
-            self.main_menu.run()
-            self.selection_menu.run()
-            self.level_1.run()
-            # self.level_2.run()
-            # self.level_3.run()
-            # self.pause_menu.run()
-            # self.ranking_menu.run()
-            # self.options_menu.run()
+            if self.active["main_menu"]:
+                # Reiniciar niveles
+                self.level_1 = Level(*self.level_1_data)
+                self.level_2 = Level(*self.level_2_data)
+                self.level_3 = Level(*self.level_3_data)
+                self.previous_selection = "main_menu"
+                self.selection = self.main_menu.run()
+                
+            if self.active["selection"]:
+                self.selection = self.selection_menu.run()
+
+            if self.active["lvl1"]:
+                self.previous_selection = "lvl1"
+                self.selection = self.level_1.run()
+                if not isinstance(self.selection, str):
+                    print("pasado")
+                    self.selection = "selection"
+
+            if self.active["lvl2"]:
+                self.previous_selection = "lvl2"
+                self.selection = self.level_2.run()
+                if not isinstance(self.selection, str):
+                    print("pasado")
+                    self.selection = "selection"
+
+            if self.active["lvl3"]:
+                self.previous_selection = "lvl3"
+                self.selection = self.level_3.run()
+                if not isinstance(self.selection, str):
+                    print("pasado")
+                    self.selection = "selection"
+                # añadir flags para desbloquear niveles
+
+            if self.active["pause"]:
+                self.selection = self.pause_menu.run(self.previous_selection)
+
+            if self.active["ranking"]:
+                self.selection = self.ranking_menu.run()
+
+            if self.active["options"]:
+                self.selection  = self.options_menu.run(self.previous_selection)
+
+            for key in self.active:
+                self.active[key] = False
+
+            if self.active != None:
+                self.active[self.selection] = True
+
 
             pygame.display.flip()
         

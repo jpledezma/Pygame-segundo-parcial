@@ -117,11 +117,11 @@ class MainMenu(Menu):
                     if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
                         self.close()
                     if self.button_ranking.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "ranking"
                     if self.button_options.rect.collidepoint(pygame.mouse.get_pos()):
-                        pass
+                        return "options"
                     if self.button_play.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "selection"
             
             for button in self.buttons:
                 if button.rect.collidepoint(pygame.mouse.get_pos()):
@@ -134,6 +134,8 @@ class MainMenu(Menu):
 class OptionsMenu(Menu):
     def __init__(self, screen: pygame.Surface) -> None:
         super().__init__(screen)
+
+        self.from_menu = ""
 
         self.secondary_font = pygame.font.Font(self.path_font, 24)
 
@@ -150,7 +152,7 @@ class OptionsMenu(Menu):
         self.text_effects_volume_rect.center = (SCREEN_WIDTH // 2 , 315)
 
         self.button_music = Button(pygame.Rect(400, 400, 220, 70), "Music on/off")
-        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Main Menu")
+        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Back")
 
         self.slider_music = SliderButton(pygame.Rect(400, 250, 35, 20))
         self.slider_effects = SliderButton(pygame.Rect(400, 350, 35, 20))
@@ -190,14 +192,15 @@ class OptionsMenu(Menu):
 
         super().draw()
         
-    def run(self):
+    def run(self, from_menu):
+        self.from_menu = from_menu
         while self.running:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     self.close()
                 if event.type == MOUSEBUTTONDOWN:
                     if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return self.from_menu
                     if self.button_music.rect.collidepoint(pygame.mouse.get_pos()):
                         pass
                     if self.slider_music.rect.collidepoint(pygame.mouse.get_pos()):
@@ -268,18 +271,18 @@ class PauseMenu(Menu):
             button.draw(self.screen)
         super().draw()
         
-    def run(self):
+    def run(self, lvl: str):
         while self.running:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     self.close()
                 if event.type == MOUSEBUTTONDOWN:
                     if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "main_menu"
                     if self.button_options.rect.collidepoint(pygame.mouse.get_pos()):
-                        pass
+                        return "options"
                     if self.button_continue.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return lvl
             
             for button in self.buttons:
                 if button.rect.collidepoint(pygame.mouse.get_pos()):
@@ -319,7 +322,7 @@ class RankingMenu(Menu):
                     self.close()
                 if event.type == MOUSEBUTTONDOWN:
                     if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "main_menu"
 
             for button in self.buttons:
                 if button.rect.collidepoint(pygame.mouse.get_pos()):
@@ -362,13 +365,13 @@ class SelectionMenu(Menu):
                     self.close()
                 if event.type == MOUSEBUTTONDOWN:
                     if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "main_menu"
                     if self.button_lvl_1.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "lvl1"
                     if self.button_lvl_2.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "lvl2"
                     if self.button_lvl_3.rect.collidepoint(pygame.mouse.get_pos()):
-                        return
+                        return "lvl3"
 
             for button in self.buttons:
                 if button.rect.collidepoint(pygame.mouse.get_pos()):
