@@ -110,8 +110,8 @@ class Game():
                     self.selection = "selection"
                 # añadir flags para desbloquear niveles 
                 # añadir item
-                # añadir plataformas moviles
-                # añadir hud
+                # añadir sonidos
+                # añadir database
 
             if self.active["pause"]:
                 self.selection = self.pause_menu.run(self.previous_selection)

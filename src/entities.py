@@ -138,6 +138,18 @@ class Entity(pygame.sprite.Sprite):
         if isinstance(value, bool):
             self.__vulnerable = value
 
+class Item(Entity):
+    def __init__(self, 
+                 groups, 
+                 spritesheet: SpriteSheet, 
+                 position: tuple[int, int], 
+                 hitbox_scale: tuple = (1, 1), 
+                 hitbox_offset: list = [0, 0]) -> None:
+        super().__init__(groups, spritesheet, position, hitbox_scale, hitbox_offset)
+
+    def hurt(self):
+        pass
+
 class Projectile(Entity):
     def __init__(self, 
                  groups, 

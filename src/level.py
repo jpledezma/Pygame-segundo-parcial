@@ -11,7 +11,7 @@ class Level():
     def __init__(self, screen: pygame.Surface, 
                  spritesheets_data: dict, 
                  tileset_data: dict, 
-                 entities_data: dict, 
+                 entities_data: dict,
                  map_data: dict,
                  mobile_platform: Platform = None
                  ) -> None:
@@ -35,6 +35,9 @@ class Level():
         self.projectiles = pygame.sprite.Group()
         self.enemy_projectiles = pygame.sprite.Group()
         self.player_projectiles = pygame.sprite.Group()
+
+        self.potions = pygame.sprite.Group()
+        self.key_items = pygame.sprite.Group()
 
         self.entities = pygame.sprite.Group()
         self.platforms = pygame.sprite.Group()
@@ -87,6 +90,20 @@ class Level():
                 self.final_boss_flag = True
         # -----------------------------------------------------------------------------------------------------------------------------------------------------------
 
+        # Instanciar items
+        # -----------------------------------------------------------------------------------------------------------------------------------------------------------
+        for items, positions in self.map_data["items_positions"].items():
+            item_img = pygame.image.load(self.spritesheets_data[items]["path"]).convert_alpha()
+            item_spritesheet = SpriteSheet(item_img, *list(self.spritesheets_data[items].values())[1:])
+            if items == "key":
+                for position in positions:
+                    Item((self.all_sprites, self.entities, self.key_items), item_spritesheet, position)
+            if items == "potion":
+                for position in positions:
+                    Item((self.all_sprites, self.entities, self.potions), item_spritesheet, position)
+
+        # -----------------------------------------------------------------------------------------------------------------------------------------------------------
+
         self.enemies_killed = 0
         self.keys_collected = 0
         self.timer = 60
@@ -98,6 +115,7 @@ class Level():
         self.keydown_keys = []
         
     def run(self):
+
         running = True
         while running:
             self.clock.tick(FPS)
@@ -121,7 +139,7 @@ class Level():
                 self.entities.add(self.final_boss)
                 self.final_boss_flag = False
 
-            if not self.enemies and not self.final_boss_group:
+            if not self.key_items and not self.final_boss_group:
                 return (0, 0)
             
             # Perder si se muere el player
@@ -137,7 +155,7 @@ class Level():
             self.screen.blit(background, (0, 0))
 
         self.all_sprites.draw(self.screen)
-        self.hud.draw(self.screen, self.timer, self.enemies_killed, 17, self.player.health, self.player_max_hp)
+        self.hud.draw(self.screen, self.timer, self.enemies_killed, self.keys_collected, self.player.health, self.player_max_hp)
 
         pygame.display.flip()
 
@@ -160,7 +178,6 @@ class Level():
             else:
                 self.mobile_platform.rect.centerx -= 1
         
-
         # Medir los iframes de las entidades y eliminarlas si se salen de la pantalla
         for entity in self.entities:
             entity.time_iframes(pygame.time.get_ticks())
@@ -186,6 +203,22 @@ class Level():
                 projectile.facing = "f" if projectile.facing == "b" else "b"
                 self.player_projectiles.add(projectile)
                 self.enemy_projectiles.remove(projectile)
+
+        # Llaves
+        for potion in self.potions:
+            if potion.rect.colliderect(self.player.hitbox):
+                self.player.health += 150
+                potion.kill()
+
+        # Pociones de salud
+        for key in self.key_items:
+            if key.rect.colliderect(self.player.hitbox):
+                self.keys_collected += 1
+                key.kill()
+        # Evitar que la vida del jugador se desborde
+        if self.player.health > self.player_max_hp:
+            self.player.health = self.player_max_hp
+        print(self.player.health)
 
         # Acciones de los enemigos
         for enemy in self.enemies:

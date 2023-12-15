@@ -42,5 +42,4 @@ class HUD():
         width = hp_percentage * self.max_width / 100
         if width >= 0:
             self.rect_health.width = width
-        print(hp_percentage, hp, width)
         
