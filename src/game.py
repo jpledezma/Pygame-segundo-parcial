@@ -49,9 +49,19 @@ class Game():
         self.pause_menu = PauseMenu(self.screen)
         self.ranking_menu = RankingMenu(self.screen)
         self.selection_menu = SelectionMenu(self.screen)
+        self.final_score_menu = FinalScorenMenu(self.screen)
 
         self.level_1_passed = False
         self.level_2_passed = False
+        self.level_3_passed = False
+
+        self.level_2_unlocked = False
+        self.level_3_unlocked = False
+
+        self.seconds_left = 0
+        self.total_enemies_killed = 0
+
+        self.score = 0
 
         self.selection = "main_menu"
         self.previous_selection = "main_menu"
@@ -65,6 +75,7 @@ class Game():
             "ranking": False,
             "pause": False,
             "options": False,
+            "final_score": False
             }
             
     def run(self):
@@ -81,37 +92,59 @@ class Game():
                 self.level_3 = Level(*self.level_3_data)
                 self.previous_selection = "main_menu"
                 self.selection = self.main_menu.run()
+
+                self.level_1_passed = False
+                self.level_2_passed = False
+                self.level_3_passed = False
+                self.seconds_left = 0
+                self.total_enemies_killed = 0
                 
             if self.active["selection"]:
                 self.selection = self.selection_menu.run()
+
+            if self.active["final_score"]:
+                self.selection = self.final_score_menu.run(self.score)
 
             if self.active["lvl1"]:
                 self.previous_selection = "lvl1"
                 self.selection = self.level_1.run()
                 if not isinstance(self.selection, str):
                     self.level_1 = Level(*self.level_1_data)
-                    print("pasado")
+                    self.level_1_passed = self.selection[0]
+                    self.total_enemies_killed += self.selection[1]
+                    self.seconds_left += self.selection[2]
+
                     self.selection = "selection"
 
             if self.active["lvl2"]:
-                self.previous_selection = "lvl2"
-                self.selection = self.level_2.run()
-                if not isinstance(self.selection, str):
-                    self.level_2 = Level(*self.level_2_data, self.mobile_platform)
-                    print("pasado")
-                    self.selection = "selection"
+                if self.level_2_unlocked:
+                    self.previous_selection = "lvl2"
+                    self.selection = self.level_2.run()
+                    if not isinstance(self.selection, str):
+                        self.level_2 = Level(*self.level_2_data, self.mobile_platform)
+                        self.level_2_passed = self.selection[0]
+                        self.total_enemies_killed += self.selection[1]
+                        self.seconds_left += self.selection[2]
+
+                self.selection = "selection"
 
             if self.active["lvl3"]:
-                self.previous_selection = "lvl3"
-                self.selection = self.level_3.run()
-                if not isinstance(self.selection, str):
-                    self.level_3 = Level(*self.level_3_data)
-                    print("pasado")
-                    self.selection = "selection"
-                # añadir flags para desbloquear niveles 
-                # añadir item
-                # añadir sonidos
-                # añadir database
+                if self.level_3_unlocked:
+                    self.previous_selection = "lvl3"
+                    self.selection = self.level_3.run()
+                    if not isinstance(self.selection, str):
+                        self.level_3 = Level(*self.level_3_data)
+                        self.level_3_passed = self.selection[0]
+                        self.total_enemies_killed += self.selection[1]
+                        self.seconds_left += self.selection[2]
+                    
+                self.selection = "selection"
+
+                if self.level_2_unlocked and self.level_3_unlocked \
+                and self.level_1_passed and self.level_2_passed and self.level_3_passed:
+                    self.score = self.total_enemies_killed * 100 + self.seconds_left * 10
+                    self.selection = "final_score"
+                    print("final score")
 
             if self.active["pause"]:
                 self.selection = self.pause_menu.run(self.previous_selection)
@@ -128,6 +161,10 @@ class Game():
             if self.active != None:
                 self.active[self.selection] = True
 
+            if self.level_1_passed:
+                self.level_2_unlocked = True
+            if self.level_2_passed:
+                self.level_3_unlocked = True            
 
             pygame.display.flip()
         
@@ -136,3 +173,6 @@ class Game():
     def close(self):
         pygame.quit()
 
+# añadir flags para desbloquear niveles 
+# añadir sonidos
+# añadir database

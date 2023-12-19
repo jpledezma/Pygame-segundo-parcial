@@ -60,6 +60,7 @@ class Menu():
 
         self.path_font = path.join(getcwd(), "assets", "fonts", "ENDOR___.ttf")
         self.font = pygame.font.Font(self.path_font, 40)
+        self.secondary_font = pygame.font.Font(self.path_font, 24)
 
         self.filter = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), SRCALPHA)
         self.filter.fill((0, 150, 150, 1))
@@ -136,8 +137,6 @@ class OptionsMenu(Menu):
         super().__init__(screen)
 
         self.from_menu = ""
-
-        self.secondary_font = pygame.font.Font(self.path_font, 24)
 
         self.text_surface = self.font.render("Options", True, (218, 188, 21))
         self.text_rect = self.text_surface.get_rect()
@@ -300,9 +299,12 @@ class RankingMenu(Menu):
         self.text_rect = self.text_surface.get_rect()
         self.text_rect.center = (SCREEN_WIDTH //2, 100)
 
-        self.button_exit = Button(pygame.Rect(400, 500, 220, 70), "Main Menu")
+        self.button_exit = Button(pygame.Rect(400, 600, 220, 70), "Main Menu")
 
         self.buttons = [self.button_exit]
+
+        self.scores_list = []
+        self.scores_surfaces = []
 
         for button in self.buttons:
             button.rect.centerx = SCREEN_WIDTH // 2
@@ -313,9 +315,14 @@ class RankingMenu(Menu):
         self.screen.blit(self.text_surface, self.text_rect)
         for button in self.buttons:
             button.draw(self.screen)
+        for surface, rect in self.scores_surfaces:
+            self.screen.blit(surface, rect)
         super().draw()
         
     def run(self):
+        self.scores_list = []
+        self.scores_surfaces = []
+        self.read_scores()
         while self.running:
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -331,6 +338,23 @@ class RankingMenu(Menu):
                     button.hover = False
             
             self.draw()
+
+    def read_scores(self):
+        with open("./data/scores.csv", "r") as file:
+            for line in file.readlines():
+                score = line
+                score = score.split(",")
+                self.scores_list.append((int(score[1]), score[0]))
+        self.scores_list.sort(reverse=True)
+        for i in range(5):
+            if i > len(self.scores_list) - 1:
+                break
+            name = self.scores_list[i][1]
+            score = str(self.scores_list[i][0])
+            surface = self.secondary_font.render(f"{i+1}. {score} - {name}", True, (248, 230, 127))
+            surface_rect = surface.get_rect(center = (SCREEN_WIDTH // 2, i * 70 + 200))
+            self.scores_surfaces.append((surface, surface_rect))
+
 
 class SelectionMenu(Menu):
     def __init__(self, screen: pygame.Surface) -> None:
@@ -380,3 +404,88 @@ class SelectionMenu(Menu):
                     button.hover = False
             
             self.draw()
+
+class FinalScorenMenu(Menu):
+    def __init__(self, screen: pygame.Surface) -> None:
+        super().__init__(screen)
+        
+        self.text_surface = self.font.render("Final score", True, (218, 188, 21))
+        self.text_rect = self.text_surface.get_rect()
+        self.text_rect.center = (SCREEN_WIDTH //2, 100)
+        
+        self.question_text_surface = self.font.render("Who are you?", True, (218, 188, 21))
+        self.question_text_rect = self.question_text_surface.get_rect()
+        self.question_text_rect.center = (SCREEN_WIDTH //2, 300)
+
+        self.player_name_text = "Introduce your name"
+        self.player_name_surface = self.font.render(self.player_name_text, True, (218, 188, 21))
+        self.player_name_rect = self.player_name_surface.get_rect(center = (SCREEN_WIDTH //2, 400))
+
+        self.caps_lock = False
+
+        self.button_exit = Button(pygame.Rect(400, 600, 220, 70), "Main Menu")
+
+        self.buttons = [self.button_exit]
+
+        for button in self.buttons:
+            button.rect.centerx = SCREEN_WIDTH // 2
+            button.text_rect.centerx = SCREEN_WIDTH // 2
+
+    def draw(self):
+        self.screen.blit(self.background_img, (0, 0))
+
+        self.screen.blit(self.text_surface, self.text_rect)
+        self.screen.blit(self.question_text_surface, self.question_text_rect)
+        self.screen.blit(self.score_text_surface, self.score_text_rect)
+        self.screen.blit(self.player_name_surface, self.player_name_rect)
+
+        pygame.draw.rect(self.screen, (218, 188, 21), self.player_name_rect, 1, 10)
+
+        for button in self.buttons:
+            button.draw(self.screen)
+        super().draw()
+        
+    def run(self, score: int):
+
+        self.score_text_surface = self.font.render(f"{score}", True, (218, 188, 21))
+        self.score_text_rect = self.score_text_surface.get_rect(center = (SCREEN_WIDTH //2, 200))
+
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    self.close()
+                if event.type == MOUSEBUTTONDOWN:
+                    if self.button_exit.rect.collidepoint(pygame.mouse.get_pos()):
+                        self.save_score(score)
+                        return "ranking"
+                    if self.player_name_rect.collidepoint(pygame.mouse.get_pos()):
+                        self.player_name_text = ""
+                
+                if event.type == KEYDOWN:
+                    if len(self.player_name_text) <= 20:
+
+                        if event.key >= 97 and event.key <= 122:
+                            self.player_name_text += chr(event.key) if not self.caps_lock else chr(event.key).upper()
+                        if event.key == K_SPACE:
+                            self.player_name_text += " "
+                    if event.key == K_BACKSPACE:
+                        self.player_name_text = self.player_name_text[:-1] # eliminar el ultimo caracter
+                    if event.key == K_CAPSLOCK:
+                        self.caps_lock = False if self.caps_lock else True
+
+            for button in self.buttons:
+                if button.rect.collidepoint(pygame.mouse.get_pos()):
+                    button.hover = True
+                else:
+                    button.hover = False
+
+            self.player_name_surface = self.font.render(self.player_name_text, True, (218, 188, 21))
+            self.player_name_rect = self.player_name_surface.get_rect(center = (SCREEN_WIDTH //2, 400))
+            
+            self.draw()
+
+    def save_score(self, score):
+        self.player_name_text = self.player_name_text.strip(" ")
+        with open("./data/scores.csv", "a", encoding="utf-8") as file:
+            file.write(self.player_name_text + "," + str(score) + "\n")
+            

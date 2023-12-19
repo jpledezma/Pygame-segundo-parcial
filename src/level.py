@@ -140,11 +140,11 @@ class Level():
                 self.final_boss_flag = False
 
             if not self.key_items and not self.final_boss_group:
-                return (0, 0)
+                return (True, self.enemies_killed, self.timer)
             
             # Perder si se muere el player
             if not self.player_group:
-                return (0, 0)
+                return (False, 0, 0)
 
             self.update()
             self.draw()
@@ -218,7 +218,6 @@ class Level():
         # Evitar que la vida del jugador se desborde
         if self.player.health > self.player_max_hp:
             self.player.health = self.player_max_hp
-        print(self.player.health)
 
         # Acciones de los enemigos
         for enemy in self.enemies:
